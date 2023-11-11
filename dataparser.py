@@ -128,27 +128,3 @@ class DataParser:
         data = metadata['MFCCs']
         x = [i for i in range(len(data))]
         return x, data
-
-
-if __name__ == '__main__':
-    parser = DataParser()
-    parser.parse_txt("Train_Arabic_Digit.txt", 66)
-    comps = [(1, 2), (2, 3), (1, 3)]
-    phoneme_map = {
-        0: 3,
-        1: 3,
-        2: 3,
-        3: 4,
-        4: 5,
-        5: 4,
-        6: 3,
-        7: 3,
-        8: 3,
-        9: 4,
-    }
-    for d in range(10):
-        parser.plot_gmms(d, comps, phoneme_map[d])
-        # plt.figure(d)
-        # parser.plot_timeseries(digit, 1, 3)
-        # parser.plot_scatter(d, 1, comp)
-    plt.show()
