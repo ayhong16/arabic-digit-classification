@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import multivariate_normal
 from sklearn.cluster import KMeans
@@ -8,10 +7,14 @@ def k_means(n_clusters, data):
     kmeans = KMeans(n_clusters=n_clusters, n_init='auto')
     kmeans.fit(data)
     labels = kmeans.labels_
+    centers = kmeans.cluster_centers_
+
     cluster_info = {}
-    for cluster_label in range(n_clusters):
-        cluster_data = data[labels == cluster_label]
-        cluster_info[cluster_label] = cluster_data
+    for point, label in zip(data, labels):
+        mean = tuple(centers[label])
+        if mean not in cluster_info:
+            cluster_info[mean] = []
+        cluster_info[mean].append(point)
     return cluster_info
 
 
@@ -26,3 +29,20 @@ def plot_contours(data, ax, color):
     pos[:, :, 0] = X
     pos[:, :, 1] = Y
     ax.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)
+
+
+def spherical_covar(data):
+    cov = np.cov(data, rowvar=False)
+    return np.identity(2) * cov
+
+
+def diagonal_covar(data):
+    covars = []
+    for dim in range(13):
+        cov = np.cov([d[dim] for d in data])
+        covars.append(cov)
+    return np.identity(13) * np.array(covars)
+
+
+def full_covar(data):
+    return np.cov(data, rowvar=False)

@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from kmeans import k_means, plot_contours
+from kmeans import k_means, plot_contours, spherical_covar, diagonal_covar, full_covar
+from util import likelihood
+from sklearn.neighbors import KernelDensity
 
 
 class DataParser:
@@ -89,12 +91,6 @@ class DataParser:
 
     def plot_gmms(self, token, comparisons, n_clusters):
         data = self.get_all_utterances(token)
-        mapped_data = {}
-        for i in range(13):
-            mapped_data[i + 1] = []
-        for x in data:
-            for i in range(13):
-                mapped_data[i + 1].append(x[i])
         fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 6))
         colors = ["c", "r", "g", "m", 'y']
         cluster_info = k_means(n_clusters, data)
@@ -105,7 +101,7 @@ class DataParser:
             for key in cluster_info:
                 c = colors[color_ind]
                 coords = np.column_stack((cluster_info[key][:, second_comp - 1],
-                                         cluster_info[key][:, first_comp - 1]))
+                                          cluster_info[key][:, first_comp - 1]))
                 axes[i].scatter(coords[:, 0], coords[:, 1], s=.1, color=c, alpha=.8)
                 plot_contours(coords, axes[i], c)
                 color_ind += 1
@@ -113,6 +109,52 @@ class DataParser:
         fig.suptitle("K-Means GMMs for Various 2D Plots for Digit " + str(token))
         plt.tight_layout()
         # plt.show()
+
+    def compute_gmm_params(self, token, n_clusters, tied, covariance_type):
+        data = self.get_all_utterances(token)
+        cluster_info = k_means(n_clusters, data)
+        cov_tied = "tied " if tied else "distinct "
+        ret = {
+            "digit": token,
+            "number of components": n_clusters,
+            "covariance type": cov_tied + covariance_type,
+            "components": []
+        }
+        for key in cluster_info:
+            component = {
+                "pi": len(cluster_info[key]) / len(data),
+                "mean": np.array(key),
+            }
+            if tied:
+                input_data = data
+            else:
+                input_data = cluster_info[key]
+
+            if covariance_type == "diagonal":
+                covar = diagonal_covar(input_data)
+            elif covariance_type == "full":
+                covar = full_covar(input_data)
+            else:
+                covar = spherical_covar(input_data)
+            component["covariance"] = covar
+            ret["components"].append(component)
+        return ret
+
+    def plot_pdfs(self, gmm):
+        fig, axs = plt.subplots(2, 5, tight_layout=True, sharex=True, sharey=True)
+
+        for digit, ax in enumerate(axs.flatten()):
+            filtered = self.df[self.df['Digit'] == digit]
+            likelihoods = np.array(filtered['MFCCs'].apply(lambda x: likelihood(gmm, x))).reshape((-1,1))
+            kde = KernelDensity(bandwidth=40, kernel='gaussian')
+            kde.fit(likelihoods)
+            x_values = np.linspace(min(likelihoods), max(likelihoods), 1000).reshape(-1, 1)
+            log_pdf = kde.score_samples(x_values)
+            ax.plot(x_values, np.exp(log_pdf))
+            ax.set_title(f"PDF for {digit}")
+        plt.tight_layout()
+        plt.suptitle(f"PDFs Using GMM for {gmm["digit"]}")
+        plt.show()
 
     def get_all_utterances(self, token):
         filtered = self.df[self.df['Digit'] == token]
