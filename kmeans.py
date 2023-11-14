@@ -4,17 +4,15 @@ from sklearn.cluster import KMeans
 
 
 def k_means(n_clusters, data):
-    kmeans = KMeans(n_clusters=n_clusters, n_init='auto')
+    kmeans = KMeans(n_clusters=n_clusters, n_init='auto', random_state=np.random.RandomState(42), init="k-means++")
     kmeans.fit(data)
     labels = kmeans.labels_
     centers = kmeans.cluster_centers_
 
     cluster_info = {}
-    for point, label in zip(data, labels):
-        mean = tuple(centers[label])
-        if mean not in cluster_info:
-            cluster_info[mean] = []
-        cluster_info[mean].append(point)
+    for cluster_label in range(n_clusters):
+        cluster_data = data[labels == cluster_label]
+        cluster_info[tuple(centers[cluster_label])] = cluster_data
     return cluster_info
 
 
@@ -32,16 +30,19 @@ def plot_contours(data, ax, color):
 
 
 def spherical_covar(data):
-    cov = np.cov(data, rowvar=False)
-    return np.identity(2) * cov
+    num_dims = data.shape[1]
+    col_stack = data.reshape((len(data) * 13, 1))
+    cov = np.cov(col_stack, rowvar=False)
+    return np.identity(num_dims) * cov
 
 
 def diagonal_covar(data):
     covars = []
+    num_dims = data.shape[1]
     for dim in range(13):
         cov = np.cov([d[dim] for d in data])
         covars.append(cov)
-    return np.identity(13) * np.array(covars)
+    return np.identity(num_dims) * np.array(covars)
 
 
 def full_covar(data):

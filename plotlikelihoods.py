@@ -1,8 +1,7 @@
-from dataparser import DataParser
+from analyzer import Analyzer
 
 if __name__ == '__main__':
-    parser = DataParser()
-    parser.parse_txt("Train_Arabic_Digit.txt", 66)
+    analyzer = Analyzer()
     phoneme_map = {
         0: 4,
         1: 4,
@@ -17,5 +16,5 @@ if __name__ == '__main__':
     }
     digit = 4
     n_components = phoneme_map[digit]
-    gmm_params = parser.compute_gmm_params(digit, n_components, True, "full")
-    parser.plot_pdfs(gmm_params)
+    gmm_params = analyzer.compute_gmm_params(digit, n_components, True, "full")
+    analyzer.plot_pdfs(gmm_params)

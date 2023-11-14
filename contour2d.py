@@ -1,9 +1,8 @@
 from matplotlib import pyplot as plt
-from dataparser import DataParser
+from analyzer import Analyzer
 
 if __name__ == '__main__':
-    parser = DataParser()
-    parser.parse_txt("Train_Arabic_Digit.txt", 66)
+    analyzer = Analyzer()
     comps = [(1, 2), (2, 3), (1, 3)]
     phoneme_map = {
         0: 4,
@@ -18,5 +17,5 @@ if __name__ == '__main__':
         9: 3,
     }
     for d in range(10):
-        parser.plot_gmms(d, comps, phoneme_map[d])
+        analyzer.plot_gmms(d, comps, phoneme_map[d])
     plt.show()
