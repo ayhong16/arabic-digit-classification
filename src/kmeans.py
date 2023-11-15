@@ -16,19 +16,6 @@ def k_means(n_clusters, data):
     return cluster_info
 
 
-def plot_contours(data, ax, color):
-    mean = np.mean(data, axis=0)
-    x = np.linspace(mean[0] - 5, mean[0] + 5, 1000)
-    y = np.linspace(mean[1] - 5, mean[1] + 5, 1000)
-    X, Y = np.meshgrid(x, y)
-    cov = np.cov(data, rowvar=False)
-    z = multivariate_normal(mean, cov)
-    pos = np.empty(X.shape + (2,))
-    pos[:, :, 0] = X
-    pos[:, :, 1] = Y
-    ax.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)
-
-
 def spherical_covar(data):
     num_dims = data.shape[1]
     col_stack = data.reshape((len(data) * 13, 1))
@@ -47,3 +34,18 @@ def diagonal_covar(data):
 
 def full_covar(data):
     return np.cov(data, rowvar=False)
+
+
+def plot_kmeans_contours(data, ax, color):
+    mean = np.mean(data, axis=0)
+    maxx_diff = max([abs(x[0] - mean[0]) for x in data])
+    maxy_diff = max([abs(x[1] - mean[1]) for x in data])
+    x = np.linspace(mean[0] - maxx_diff, mean[0] + maxx_diff, 1000)
+    y = np.linspace(mean[1] - maxy_diff, mean[1] + maxy_diff, 1000)
+    X, Y = np.meshgrid(x, y)
+    cov = np.cov(data, rowvar=False)
+    z = multivariate_normal(mean, cov)
+    pos = np.empty(X.shape + (2,))
+    pos[:, :, 0] = X
+    pos[:, :, 1] = Y
+    ax.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)

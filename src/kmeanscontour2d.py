@@ -17,5 +17,5 @@ if __name__ == '__main__':
         9: 3,
     }
     for d in range(10):
-        analyzer.plot_gmms(d, comps, phoneme_map[d])
+        analyzer.plot_kmeans_gmm(d, comps, phoneme_map[d])
     plt.show()

@@ -13,3 +13,10 @@ def likelihood(gmm, utterance):
     return np.sum(np.log(col_sums))
 
 
+def get_comp_covariance(x, y, covar):
+    cov = np.zeros((2, 2))
+    cov[0][0] = covar[x][x]
+    cov[0][1] = covar[x][y]
+    cov[1][0] = covar[y][x]
+    cov[1][1] = covar[y][y]
+    return cov

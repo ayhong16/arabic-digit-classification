@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.neighbors import KernelDensity
-from kmeans import k_means, plot_contours, spherical_covar, diagonal_covar, full_covar
-from util import likelihood
+from kmeans import k_means, spherical_covar, diagonal_covar, full_covar, plot_kmeans_contours
+from em import em, plot_em_contours
+from util import likelihood, get_comp_covariance
 from dataparser import DataParser
 
 
@@ -57,7 +58,7 @@ class Analyzer:
         plt.title("Scatter Plot of Various MFCC Relationships in a Single Utterance of " + str(token))
         # plt.show()  # comment out for making multiple graphs at once
 
-    def plot_gmms(self, token, comparisons, n_clusters):
+    def plot_kmeans_gmm(self, token, comparisons, n_clusters):
         data = self.get_all_utterances(token)
         fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 6))
         colors = ["c", "r", "g", "m", 'y']
@@ -71,12 +72,32 @@ class Analyzer:
                 coords = np.column_stack((cluster_info[key][:, second_comp - 1],
                                           cluster_info[key][:, first_comp - 1]))
                 axes[i].scatter(coords[:, 0], coords[:, 1], s=.1, color=c, alpha=.8)
-                plot_contours(coords, axes[i], c)
+                plot_kmeans_contours(coords, axes[i], c)
                 color_ind += 1
             axes[i].set_title("MFCC " + str(first_comp) + "(y) vs. MFCC" + str(second_comp) + "(x)")
         fig.suptitle("K-Means GMMs for Various 2D Plots for Digit " + str(token))
         plt.tight_layout()
-        # plt.show()
+
+    def plot_em_gmm(self, token, comparisons, n_components, cov_type):
+        data = self.get_all_utterances(token)
+        fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 6))
+        colors = ["c", "r", "g", "m", 'y']
+        cluster_info = em(n_components, data, cov_type)
+        for i in range(len(comparisons)):
+            first_comp = comparisons[i][0]
+            second_comp = comparisons[i][1]
+            color_ind = 0
+            for key in cluster_info:
+                c = colors[color_ind]
+                coords = np.column_stack(((cluster_info[key]["data"][:, second_comp - 1],
+                                           cluster_info[key]["data"][:, first_comp - 1])))
+                axes[i].scatter(coords[:, 0], coords[:, 1], s=.1, c=c, alpha=.8)
+                cov = get_comp_covariance(second_comp - 1, first_comp - 1, cluster_info[key]["cov"])
+                plot_em_contours([key[second_comp - 1], key[first_comp - 1]], cov, c, axes[i], coords)
+                color_ind += 1
+            axes[i].set_title("MFCC " + str(first_comp) + "(y) vs. MFCC" + str(second_comp) + "(x)")
+        fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))
+        plt.tight_layout()
 
     def compute_gmm_params(self, token, n_clusters, tied, covariance_type):
         data = self.get_all_utterances(token)
