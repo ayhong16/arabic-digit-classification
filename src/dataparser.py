@@ -13,7 +13,7 @@ class DataParser:
         iterations_per_gender = int((num_speakers / 2) * 10)
         iterations_per_digit = int(num_speakers * 10)
         gender = 'M'
-        file = open('./spoken+arabic+digit/' + filename, 'r')
+        file = open('../spoken+arabic+digit/' + filename, 'r')
         lines = file.readlines()
         first_line = True
         mfccs = []
@@ -39,6 +39,9 @@ class DataParser:
             else:
                 nums = stripped.split(" ")
                 mfccs.append([float(num) for num in nums])
+        if mfccs:  # If there are remaining MFCCs not yet processed
+            new_row = pd.DataFrame([{'Digit': digit, 'Index': index, 'Gender': gender, 'MFCCs': mfccs}])
+            self.df = pd.concat([self.df, new_row], ignore_index=True).reset_index(drop=True)
 
     def get_dataframe(self):
         return self.df

@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 
 
-def likelihood(gmm, utterance):
+def compute_likelihood(gmm, utterance):
     components = gmm["components"]
     inner_sums = []
     for component in components:
@@ -11,6 +11,10 @@ def likelihood(gmm, utterance):
         inner_sums.append(pi * mvn.pdf(utterance))
     col_sums = np.sum(np.array(inner_sums), axis=0)
     return np.sum(np.log(col_sums))
+
+
+def classify_utterance(utterance, gmms):
+    return np.argmax([compute_likelihood(gmm, utterance) for gmm in gmms])
 
 
 def get_comp_covariance(x, y, covar):

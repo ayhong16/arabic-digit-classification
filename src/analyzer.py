@@ -3,19 +3,34 @@ import numpy as np
 from sklearn.neighbors import KernelDensity
 from kmeans import k_means, plot_kmeans_contours, kmeans_component_gmm_helper
 from em import em, plot_em_contours, em_component_gmm_helper
-from util import likelihood, get_comp_covariance
+from util import compute_likelihood, get_comp_covariance, classify_utterance
 from dataparser import DataParser
 
 
 class Analyzer:
 
     def __init__(self):
-        self.parser = DataParser()
-        self.parser.parse_txt("Train_Arabic_Digit.txt", 66)
-        self.df = self.parser.get_dataframe()
+        train_parser = DataParser()
+        train_parser.parse_txt("Train_Arabic_Digit.txt", 66)
+        self.train_df = train_parser.get_dataframe()
+        test_parser = DataParser()
+        test_parser.parse_txt("Test_Arabic_Digit.txt", 22)
+        self.test_df = test_parser.get_dataframe()
+        self.phoneme_map = {
+            0: 4,
+            1: 4,
+            2: 3,
+            3: 4,
+            4: 3,
+            5: 3,
+            6: 4,
+            7: 3,
+            8: 4,
+            9: 3,
+        }
 
     def plot_timeseries(self, token, index, num_mfccs):
-        metadata = self.get_single_utterance_data(token, index)
+        metadata = self.get_single_training_utterance(token, index)
         data = metadata[1]
         x = metadata[0]
         y = []
@@ -35,7 +50,7 @@ class Analyzer:
         # plt.show()  # comment out for making multiple graphs at once
 
     def plot_scatter(self, token, index, comparisons):
-        metadata = self.get_single_utterance_data(token, index)
+        metadata = self.get_single_training_utterance(token, index)
         data = metadata[1]
         mapped_data = {}
         mfccs_needed = set()
@@ -59,7 +74,7 @@ class Analyzer:
         # plt.show()  # comment out for making multiple graphs at once
 
     def plot_kmeans_gmm(self, token, comparisons, n_clusters):
-        data = self.get_all_utterances(token)
+        data = self.get_all_training_utterances(token)
         fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 6))
         colors = ["c", "r", "g", "m", 'y']
         cluster_info = k_means(n_clusters, data)
@@ -79,7 +94,7 @@ class Analyzer:
         plt.tight_layout()
 
     def plot_em_gmm(self, token, comparisons, n_components, cov_type):
-        data = self.get_all_utterances(token)
+        data = self.get_all_training_utterances(token)
         fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 6))
         colors = ["c", "r", "g", "m", 'y']
         cluster_info = em(n_components, data, cov_type)
@@ -99,9 +114,9 @@ class Analyzer:
         fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))
         plt.tight_layout()
 
-    def compute_gmm_params(self, token, n_clusters, tied, covariance_type, useKmeans):
-        data = self.get_all_utterances(token)
-        if useKmeans:
+    def estimate_gmm_params(self, token, n_clusters, tied, covariance_type, use_kmeans):
+        data = self.get_all_training_utterances(token)
+        if use_kmeans:
             cluster_info = k_means(n_clusters, data)
             components = kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied)
         else:
@@ -120,8 +135,8 @@ class Analyzer:
         fig, axs = plt.subplots(2, 5, tight_layout=True, sharex=True, sharey=True)
 
         for digit, ax in enumerate(axs.flatten()):
-            filtered = self.df[self.df['Digit'] == digit]
-            likelihoods = np.array(filtered['MFCCs'].apply(lambda x: likelihood(gmm, x))).reshape((-1, 1))
+            filtered = self.train_df[self.train_df['Digit'] == digit]
+            likelihoods = np.array(filtered['MFCCs'].apply(lambda x: compute_likelihood(gmm, x))).reshape((-1, 1))
             kde = KernelDensity(bandwidth=40, kernel='gaussian')
             kde.fit(likelihoods)
             x_values = np.linspace(min(likelihoods), max(likelihoods), 1000).reshape(-1, 1)
@@ -132,15 +147,48 @@ class Analyzer:
         plt.suptitle(f"PDFs Using {gmm["covariance type"]} GMM for {gmm["digit"]}")
         plt.show()
 
-    def get_all_utterances(self, token):
-        filtered = self.df[self.df['Digit'] == token]
+    def classify_all_utterances(self, token, gmms):
+        filtered = self.filter_test_utterances(token)
+        classifications = np.zeros(10)
+        mfccs = filtered["MFCCs"].to_numpy()
+        for utterance in mfccs:
+            classification = classify_utterance(utterance, gmms)
+            classifications[classification] += 1
+        # total_utterances = len(mfccs)
+        # classifications = classifications / total_utterances
+        # return np.round(classifications, 2)
+        return classifications
+
+    def compute_confusion_matrix(self, tied, covariance_type, use_kmeans):
+        confusion = np.zeros((10, 10))
+        gmms = []
+        for digit in range(10):
+            gmms.append(self.estimate_gmm_params(digit, self.phoneme_map[digit],
+                                                 tied, covariance_type, use_kmeans))
+        for digit in range(10):
+            classification = self.classify_all_utterances(digit, gmms)
+            confusion[digit, :] = classification
+        fig, ax = plt.subplots()
+        ax.axis('off')  # Hide axis for a cleaner table display
+        ax.table(cellText=confusion, loc='center', cellLoc='center', colLabels=[f"GMM {i}" for i in range(10)],
+                 rowLabels=[f"Test {i}" for i in range(10)])
+        ax.set_title(f"Confusion Matrix for "
+                     f"{"Tied " if tied else "Distinct"} {covariance_type} "
+                     f"Using {"KMeans" if use_kmeans else "EM"} GMMs")
+        plt.show()
+
+    def filter_test_utterances(self, token):
+        return self.test_df[self.test_df['Digit'] == token]
+
+    def get_all_training_utterances(self, token):
+        filtered = self.train_df[self.train_df['Digit'] == token]
         data = []
         for index, row in filtered.iterrows():
             data.append(row['MFCCs'])
         return np.vstack(data)
 
-    def get_single_utterance_data(self, token, index):
-        filtered = self.df[self.df['Digit'] == token]
+    def get_single_training_utterance(self, token, index):
+        filtered = self.train_df[self.train_df['Digit'] == token]
         filtered = filtered[filtered['Index'] == index]
         metadata = filtered.iloc[0]  # first token
         data = metadata['MFCCs']
