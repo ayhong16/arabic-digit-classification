@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.neighbors import KernelDensity
-from kmeans import k_means, spherical_covar, diagonal_covar, full_covar, plot_kmeans_contours
-from em import em, plot_em_contours
+from kmeans import k_means, plot_kmeans_contours, kmeans_component_gmm_helper
+from em import em, plot_em_contours, em_component_gmm_helper
 from util import likelihood, get_comp_covariance
 from dataparser import DataParser
 
@@ -99,44 +99,24 @@ class Analyzer:
         fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))
         plt.tight_layout()
 
-    def compute_gmm_params(self, token, n_clusters, tied, covariance_type):
+    def compute_gmm_params(self, token, n_clusters, tied, covariance_type, useKmeans):
         data = self.get_all_utterances(token)
-        cluster_info = k_means(n_clusters, data)
+        if useKmeans:
+            cluster_info = k_means(n_clusters, data)
+            components = kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied)
+        else:
+            cluster_info = em(n_clusters, data, covariance_type)
+            components = em_component_gmm_helper(cluster_info)
         cov_tied = "tied " if tied else "distinct "
         ret = {
             "digit": token,
             "number of components": n_clusters,
             "covariance type": cov_tied + covariance_type,
-            "components": []
+            "components": components
         }
-
-        tied_data = np.zeros((0, 13))
-        for key in cluster_info:
-            mean = np.array(key)
-            centered_points = cluster_info[key] - mean
-            tied_data = np.vstack((tied_data, centered_points))
-
-        for key in cluster_info:
-            component = {
-                "pi": len(cluster_info[key]) / len(data),
-                "mean": np.array(key),
-            }
-            if tied:
-                input_data = tied_data
-            else:
-                input_data = cluster_info[key]
-
-            if covariance_type == "diagonal":
-                covar = diagonal_covar(input_data)
-            elif covariance_type == "full":
-                covar = full_covar(input_data)
-            else:
-                covar = spherical_covar(input_data)
-            component["covariance"] = covar
-            ret["components"].append(component)
         return ret
 
-    def plot_pdfs(self, gmm):
+    def plot_likelihood_pdfs(self, gmm):
         fig, axs = plt.subplots(2, 5, tight_layout=True, sharex=True, sharey=True)
 
         for digit, ax in enumerate(axs.flatten()):

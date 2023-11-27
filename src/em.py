@@ -10,6 +10,7 @@ def em(n_components, data, cov_type):
     labels = gmm.predict(data)
     means = gmm.means_
     covars = gmm.covariances_
+    weights = gmm.weights_
     if len(covars) == 1:
         covars = np.tile(covars, n_components)
     cluster_info = {}
@@ -17,7 +18,8 @@ def em(n_components, data, cov_type):
         cluster_data = data[labels == cluster_label]
         cluster_info[tuple(means[cluster_label])] = {
             "cov": covars[cluster_label],
-            "data": cluster_data
+            "data": cluster_data,
+            "pi": weights[cluster_label]
         }
     return cluster_info
 
@@ -33,3 +35,14 @@ def plot_em_contours(mean, cov, color, ax, coords):
     pos[:, :, 0] = X
     pos[:, :, 1] = Y
     ax.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)
+
+
+def em_component_gmm_helper(cluster_info):
+    components = []
+    for key in cluster_info:
+        components.append({
+            "pi": cluster_info[key]["pi"],
+            "mean": np.array(key),
+            "covariance": cluster_info[key]["cov"]
+        })
+    return components

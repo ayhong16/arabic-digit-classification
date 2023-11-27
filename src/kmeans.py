@@ -49,3 +49,32 @@ def plot_kmeans_contours(data, ax, color):
     pos[:, :, 0] = X
     pos[:, :, 1] = Y
     ax.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)
+
+
+def kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied):
+    tied_data = np.zeros((0, 13))
+    for key in cluster_info:
+        mean = np.array(key)
+        centered_points = cluster_info[key] - mean
+        tied_data = np.vstack((tied_data, centered_points))
+
+    components = []
+    for key in cluster_info:
+        component = {
+            "pi": len(cluster_info[key]) / len(data),
+            "mean": np.array(key),
+        }
+        if tied:
+            input_data = tied_data
+        else:
+            input_data = cluster_info[key]
+
+        if covariance_type == "diagonal":
+            covar = diagonal_covar(input_data)
+        elif covariance_type == "full":
+            covar = full_covar(input_data)
+        else:
+            covar = spherical_covar(input_data)
+        component["covariance"] = covar
+        components.append(component)
+    return components

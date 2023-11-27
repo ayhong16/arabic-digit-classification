@@ -1,3 +1,5 @@
+from matplotlib import pyplot as plt
+
 from analyzer import Analyzer
 
 if __name__ == '__main__':
@@ -16,5 +18,6 @@ if __name__ == '__main__':
     }
     digit = 4
     n_components = phoneme_map[digit]
-    gmm_params = analyzer.compute_gmm_params(digit, n_components, True, "full")
-    analyzer.plot_pdfs(gmm_params)
+    gmm_params = analyzer.compute_gmm_params(digit, n_components, True, "full", False)
+    analyzer.plot_likelihood_pdfs(gmm_params)
+
