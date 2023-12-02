@@ -16,17 +16,57 @@ class Analyzer:
         test_parser = DataParser()
         test_parser.parse_txt("Test_Arabic_Digit.txt", 22)
         self.test_df = test_parser.get_dataframe()
-        self.phoneme_map = {
-            0: 4,
-            1: 4,
-            2: 3,
-            3: 4,
-            4: 3,
-            5: 3,
-            6: 4,
-            7: 3,
-            8: 4,
-            9: 3,
+        self.param_map = {
+            0: {"num_phonemes": 4,
+                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                "tied": False,
+                "cov_type": "full",
+                "use_kmeans": False},
+            1: {"num_phonemes": 4,
+                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                "tied": False,
+                "cov_type": "full",
+                "use_kmeans": False},
+            2: {"num_phonemes": 3,
+                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                "tied": False,
+                "cov_type": "full",
+                "use_kmeans": False},
+            3: {"num_phonemes": 4,
+                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                "tied": False,
+                "cov_type": "full",
+                "use_kmeans": False},
+            4: {"num_phonemes": 3,
+                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                "tied": False,
+                "cov_type": "full",
+                "use_kmeans": False},
+            5: {"num_phonemes": 3,
+                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                "tied": False,
+                "cov_type": "full",
+                "use_kmeans": False},
+            6: {"num_phonemes": 4,
+                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                "tied": False,
+                "cov_type": "full",
+                "use_kmeans": False},
+            7: {"num_phonemes": 3,
+                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                "tied": False,
+                "cov_type": "full",
+                "use_kmeans": False},
+            8: {"num_phonemes": 4,
+                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                "tied": False,
+                "cov_type": "full",
+                "use_kmeans": False},
+            9: {"num_phonemes": 3,
+                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                "tied": False,
+                "cov_type": "full",
+                "use_kmeans": False},
         }
 
     def plot_timeseries(self, token, index, num_mfccs):
@@ -114,7 +154,11 @@ class Analyzer:
         fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))
         plt.tight_layout()
 
-    def estimate_gmm_params(self, token, n_clusters, tied, covariance_type, use_kmeans):
+    def estimate_gmm_params(self, token):
+        n_clusters = self.param_map[token]["num_phonemes"]
+        tied = self.param_map[token]["tied"]
+        covariance_type = self.param_map[token]["cov_type"]
+        use_kmeans = self.param_map[token]["use_kmeans"]
         data = self.get_all_training_utterances(token)
         if use_kmeans:
             cluster_info = k_means(n_clusters, data)
@@ -162,8 +206,7 @@ class Analyzer:
         confusion = np.zeros((10, 10))
         gmms = []
         for digit in range(10):
-            gmms.append(self.estimate_gmm_params(digit, self.phoneme_map[digit],
-                                                 tied, covariance_type, use_kmeans))
+            gmms.append(self.estimate_gmm_params(digit))
         for digit in range(10):
             classification = self.classify_all_utterances(digit, gmms)
             confusion[digit, :] = classification

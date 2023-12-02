@@ -13,7 +13,7 @@ class DataParser:
         iterations_per_gender = int((num_speakers / 2) * 10)
         iterations_per_digit = int(num_speakers * 10)
         gender = 'M'
-        file = open('../spoken+arabic+digit/' + filename, 'r')
+        file = open('../data/' + filename, 'r')
         lines = file.readlines()
         first_line = True
         mfccs = []
