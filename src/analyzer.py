@@ -154,10 +154,9 @@ class Analyzer:
         for utterance in mfccs:
             classification = classify_utterance(utterance, gmms)
             classifications[classification] += 1
-        # total_utterances = len(mfccs)
-        # classifications = classifications / total_utterances
-        # return np.round(classifications, 2)
-        return classifications
+        total_utterances = len(mfccs)
+        classifications = classifications / total_utterances
+        return np.round(classifications, 3)
 
     def compute_confusion_matrix(self, tied, covariance_type, use_kmeans):
         confusion = np.zeros((10, 10))
