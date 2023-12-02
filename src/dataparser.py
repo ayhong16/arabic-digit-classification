@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -24,6 +25,7 @@ class DataParser:
 
             stripped = line.strip()
             if len(stripped) == 0:  # new line signifying end of block
+                # mfccs = np.array(mfccs)
                 new_row = pd.DataFrame([{'Digit': digit, 'Index': index, 'Gender': gender, 'MFCCs': mfccs}])
                 self.df = pd.concat([self.df, new_row], ignore_index=True).reset_index(drop=True)
                 mfccs = []
