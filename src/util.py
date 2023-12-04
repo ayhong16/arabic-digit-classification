@@ -3,9 +3,10 @@ from scipy.stats import multivariate_normal
 import ast
 
 
-def compute_likelihood(gmm, utterance):
+def compute_likelihood(gmm, utterance, selected):
     components = gmm["components"]
     inner_sums = []
+    utterance = utterance[:, selected]
     for component in components:
         pi = component["pi"]
         mvn = multivariate_normal(mean=component["mean"], cov=component["covariance"])

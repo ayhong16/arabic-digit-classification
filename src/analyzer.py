@@ -154,12 +154,13 @@ class Analyzer:
         fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))
         plt.tight_layout()
 
-    def estimate_gmm_params(self, token):
+    def estimate_gmm_params(self, token, selected_mfccs):
         n_clusters = self.param_map[token]["num_phonemes"]
         tied = self.param_map[token]["tied"]
         covariance_type = self.param_map[token]["cov_type"]
         use_kmeans = self.param_map[token]["use_kmeans"]
         data = self.get_all_training_utterances(token)
+        data = data[:, selected_mfccs]
         if use_kmeans:
             cluster_info = k_means(n_clusters, data)
             components = kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied)
@@ -171,7 +172,8 @@ class Analyzer:
             "digit": token,
             "number of components": n_clusters,
             "covariance type": cov_tied + covariance_type,
-            "components": components
+            "components": components,
+            "mfccs": selected_mfccs
         }
         return ret
 
@@ -180,7 +182,9 @@ class Analyzer:
 
         for digit, ax in enumerate(axs.flatten()):
             filtered = self.train_df[self.train_df['Digit'] == digit]
-            likelihoods = np.array(filtered['MFCCs'].apply(lambda x: compute_likelihood(gmm, x))).reshape((-1, 1))
+            selected = [0, 7, 9, 12]
+            likelihoods = np.array(filtered['MFCCs'].apply(lambda x:
+                                                           compute_likelihood(gmm, x, selected))).reshape((-1, 1))
             kde = KernelDensity(bandwidth=40, kernel='gaussian')
             kde.fit(likelihoods)
             x_values = np.linspace(min(likelihoods), max(likelihoods), 1000).reshape(-1, 1)

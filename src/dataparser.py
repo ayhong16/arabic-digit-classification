@@ -25,7 +25,7 @@ class DataParser:
 
             stripped = line.strip()
             if len(stripped) == 0:  # new line signifying end of block
-                # mfccs = np.array(mfccs)
+                mfccs = np.array(mfccs)
                 new_row = pd.DataFrame([{'Digit': digit, 'Index': index, 'Gender': gender, 'MFCCs': mfccs}])
                 self.df = pd.concat([self.df, new_row], ignore_index=True).reset_index(drop=True)
                 mfccs = []
@@ -42,6 +42,7 @@ class DataParser:
                 nums = stripped.split(" ")
                 mfccs.append([float(num) for num in nums])
         if mfccs:  # If there are remaining MFCCs not yet processed
+            mfccs = np.array(mfccs)
             new_row = pd.DataFrame([{'Digit': digit, 'Index': index, 'Gender': gender, 'MFCCs': mfccs}])
             self.df = pd.concat([self.df, new_row], ignore_index=True).reset_index(drop=True)
 
