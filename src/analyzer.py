@@ -8,7 +8,6 @@ from em import em, plot_em_contours, em_component_gmm_helper
 from util import compute_likelihood, get_comp_covariance, classify_utterance
 from dataparser import DataParser
 from gradientplotter import GradientPlotter
-from gmm import GMM
 
 
 class Analyzer:
