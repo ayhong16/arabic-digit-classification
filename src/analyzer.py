@@ -1,3 +1,5 @@
+import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.neighbors import KernelDensity
@@ -5,17 +7,16 @@ from kmeans import k_means, plot_kmeans_contours, kmeans_component_gmm_helper
 from em import em, plot_em_contours, em_component_gmm_helper
 from util import compute_likelihood, get_comp_covariance, classify_utterance
 from dataparser import DataParser
+from gradientplotter import GradientPlotter
+from gmm import GMM
 
 
 class Analyzer:
 
     def __init__(self):
-        train_parser = DataParser()
-        train_parser.parse_txt("Train_Arabic_Digit.txt", 66)
-        self.train_df = train_parser.get_dataframe()
-        test_parser = DataParser()
-        test_parser.parse_txt("Test_Arabic_Digit.txt", 22)
-        self.test_df = test_parser.get_dataframe()
+        parser = DataParser()
+        self.train_df = parser.train_df
+        self.test_df = parser.test_df
         self.param_map = {
             0: {"num_phonemes": 4,
                 "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -52,7 +53,7 @@ class Analyzer:
                 "tied": False,
                 "cov_type": "full",
                 "use_kmeans": False},
-            7: {"num_phonemes": 3,
+            7: {"num_phonemes": 4,
                 "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                 "tied": False,
                 "cov_type": "full",
@@ -62,12 +63,13 @@ class Analyzer:
                 "tied": False,
                 "cov_type": "full",
                 "use_kmeans": False},
-            9: {"num_phonemes": 3,
+            9: {"num_phonemes": 5,
                 "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                 "tied": False,
                 "cov_type": "full",
                 "use_kmeans": False},
         }
+        self.gmm = GMM(self.param_map, self.train_df, self.test_df)
 
     def plot_timeseries(self, token, index, num_mfccs):
         metadata = self.get_single_training_utterance(token, index)
@@ -154,13 +156,13 @@ class Analyzer:
         fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))
         plt.tight_layout()
 
-    def estimate_gmm_params(self, token, selected_mfccs):
+    def estimate_gmm_params(self, token):
         n_clusters = self.param_map[token]["num_phonemes"]
         tied = self.param_map[token]["tied"]
         covariance_type = self.param_map[token]["cov_type"]
         use_kmeans = self.param_map[token]["use_kmeans"]
         data = self.get_all_training_utterances(token)
-        data = data[:, selected_mfccs]
+        data = data[:, self.param_map[token]["mfccs"]]
         if use_kmeans:
             cluster_info = k_means(n_clusters, data)
             components = kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied)
@@ -173,7 +175,7 @@ class Analyzer:
             "number of components": n_clusters,
             "covariance type": cov_tied + covariance_type,
             "components": components,
-            "mfccs": selected_mfccs
+            "mfccs": self.param_map[token]["mfccs"]
         }
         return ret
 
@@ -182,9 +184,8 @@ class Analyzer:
 
         for digit, ax in enumerate(axs.flatten()):
             filtered = self.train_df[self.train_df['Digit'] == digit]
-            selected = [0, 7, 9, 12]
             likelihoods = np.array(filtered['MFCCs'].apply(lambda x:
-                                                           compute_likelihood(gmm, x, selected))).reshape((-1, 1))
+                                                           compute_likelihood(gmm, x))).reshape((-1, 1))
             kde = KernelDensity(bandwidth=40, kernel='gaussian')
             kde.fit(likelihoods)
             x_values = np.linspace(min(likelihoods), max(likelihoods), 1000).reshape(-1, 1)
@@ -196,6 +197,7 @@ class Analyzer:
         plt.show()
 
     def classify_all_utterances(self, token, gmms):
+        start = time.time()
         filtered = self.filter_test_utterances(token)
         classifications = np.zeros(10)
         mfccs = filtered["MFCCs"].to_numpy()
@@ -204,6 +206,8 @@ class Analyzer:
             classifications[classification] += 1
         total_utterances = len(mfccs)
         classifications = classifications / total_utterances
+        end = time.time()
+        print(f"Time to classify {token}: {end - start}")
         return np.round(classifications, 3)
 
     def compute_confusion_matrix(self, tied, covariance_type, use_kmeans):
@@ -214,9 +218,15 @@ class Analyzer:
         for digit in range(10):
             classification = self.classify_all_utterances(digit, gmms)
             confusion[digit, :] = classification
+        print(confusion)
+
         fig, ax = plt.subplots()
-        ax.axis('off')  # Hide axis for a cleaner table display
-        ax.table(cellText=confusion, loc='center', cellLoc='center', colLabels=[f"GMM {i}" for i in range(10)],
+        mapper = GradientPlotter((1, 0, 0), (0, 1, 0), 1)
+
+        # Create a 2D list for cell colors
+        cell_colors = [[mapper(confusion[i][j]) for j in range(len(confusion[i]))] for i in range(len(confusion))]
+        ax.axis('off')
+        ax.table(cellText=confusion, cellColours=cell_colors, loc='center', cellLoc='center', colLabels=[f"GMM {i}" for i in range(10)],
                  rowLabels=[f"Test {i}" for i in range(10)])
         ax.set_title(f"Confusion Matrix for "
                      f"{"Tied " if tied else "Distinct"} {covariance_type} "
