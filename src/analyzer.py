@@ -16,59 +16,21 @@ class Analyzer:
         parser = DataParser()
         self.train_df = parser.train_df
         self.test_df = parser.test_df
-        self.param_map = {
-            0: {"num_phonemes": 4,
-                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                "tied": False,
-                "cov_type": "full",
-                "use_kmeans": False},
-            1: {"num_phonemes": 4,
-                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                "tied": False,
-                "cov_type": "full",
-                "use_kmeans": False},
-            2: {"num_phonemes": 3,
-                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                "tied": False,
-                "cov_type": "full",
-                "use_kmeans": False},
-            3: {"num_phonemes": 4,
-                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                "tied": False,
-                "cov_type": "full",
-                "use_kmeans": False},
-            4: {"num_phonemes": 3,
-                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                "tied": False,
-                "cov_type": "full",
-                "use_kmeans": False},
-            5: {"num_phonemes": 3,
-                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                "tied": False,
-                "cov_type": "full",
-                "use_kmeans": False},
-            6: {"num_phonemes": 4,
-                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                "tied": False,
-                "cov_type": "full",
-                "use_kmeans": False},
-            7: {"num_phonemes": 4,
-                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                "tied": False,
-                "cov_type": "full",
-                "use_kmeans": False},
-            8: {"num_phonemes": 4,
-                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                "tied": False,
-                "cov_type": "full",
-                "use_kmeans": False},
-            9: {"num_phonemes": 5,
-                "mfccs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                "tied": False,
-                "cov_type": "full",
-                "use_kmeans": False},
+        self.mfccs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        self.cov = {"tied": False, "cov_type": "full"}
+        self.use_kmeans = False
+        self.phoneme_map = {
+            0: 4,
+            1: 4,
+            2: 3,
+            3: 4,
+            4: 3,
+            5: 3,
+            6: 4,
+            7: 4,
+            8: 4,
+            9: 5,
         }
-        self.gmm = GMM(self.param_map, self.train_df, self.test_df)
 
     def plot_timeseries(self, token, index, num_mfccs):
         metadata = self.get_single_training_utterance(token, index)
@@ -156,13 +118,13 @@ class Analyzer:
         plt.tight_layout()
 
     def estimate_gmm_params(self, token):
-        n_clusters = self.param_map[token]["num_phonemes"]
-        tied = self.param_map[token]["tied"]
-        covariance_type = self.param_map[token]["cov_type"]
-        use_kmeans = self.param_map[token]["use_kmeans"]
+        start = time.time()
+        n_clusters = self.phoneme_map[token]
+        tied = self.cov["tied"]
+        covariance_type = self.cov["cov_type"]
         data = self.get_all_training_utterances(token)
-        data = data[:, self.param_map[token]["mfccs"]]
-        if use_kmeans:
+        data = data[:, self.mfccs]
+        if self.use_kmeans:
             cluster_info = k_means(n_clusters, data)
             components = kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied)
         else:
@@ -174,8 +136,10 @@ class Analyzer:
             "number of components": n_clusters,
             "covariance type": cov_tied + covariance_type,
             "components": components,
-            "mfccs": self.param_map[token]["mfccs"]
+            "mfccs": self.mfccs
         }
+        end = time.time()
+        print(f"Time to train {token}: {end - start}")
         return ret
 
     def plot_likelihood_pdfs(self, gmm):
