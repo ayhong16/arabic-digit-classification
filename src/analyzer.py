@@ -117,14 +117,26 @@ class Analyzer:
         fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))
         plt.tight_layout()
 
-    def estimate_gmm_params(self, token):
+    def estimate_gmm_params(self, token, covariance_type=None, use_kmeans=None, tied=None):
+        """
+        Estimates a GMM based on the parameters specified in the param_map.
+        :param tied:
+        :param use_kmeans:
+        :param covariance_type:
+        :param token: the number to estimate the GMM for
+        :return: dictionary containing the parameters of the specified GMM
+        """
         start = time.time()
         n_clusters = self.phoneme_map[token]
-        tied = self.cov["tied"]
-        covariance_type = self.cov["cov_type"]
+        if covariance_type is None:
+            covariance_type = self.cov["cov_type"]
+        if tied is None:
+            tied = self.cov["tied"]
+        if use_kmeans is None:
+            use_kmeans = self.use_kmeans
         data = self.get_all_training_utterances(token)
         data = data[:, self.mfccs]
-        if self.use_kmeans:
+        if use_kmeans:
             cluster_info = k_means(n_clusters, data)
             components = kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied)
         else:
@@ -143,8 +155,7 @@ class Analyzer:
         return ret
 
     def plot_likelihood_pdfs(self, gmm):
-        fig, axs = plt.subplots(2, 5, tight_layout=True, sharex=True, sharey=True)
-
+        fig, axs = plt.subplots(10, 1, tight_layout=True, sharex=True, sharey=True)
         for digit, ax in enumerate(axs.flatten()):
             filtered = self.train_df[self.train_df['Digit'] == digit]
             likelihoods = np.array(filtered['MFCCs'].apply(lambda x:
@@ -154,7 +165,7 @@ class Analyzer:
             x_values = np.linspace(min(likelihoods), max(likelihoods), 1000).reshape(-1, 1)
             log_pdf = kde.score_samples(x_values)
             ax.plot(x_values, np.exp(log_pdf))
-            ax.set_title(f"PDF for {digit}")
+            plt.xlim((-1500, -200))
         plt.tight_layout()
         plt.suptitle(f"PDFs Using {gmm["covariance type"]} GMM for {gmm["digit"]}")
         plt.show()
@@ -173,28 +184,13 @@ class Analyzer:
         print(f"Time to classify {token}: {end - start}")
         return np.round(classifications, 3)
 
-    def compute_confusion_matrix(self, tied, covariance_type, use_kmeans):
+    def compute_confusion_matrix(self, cov_type=None, use_kmeans=None, tied=None):
         confusion = np.zeros((10, 10))
-        gmms = []
-        for digit in range(10):
-            gmms.append(self.estimate_gmm_params(digit))
+        gmms = [self.estimate_gmm_params(digit, cov_type, use_kmeans, tied) for digit in range(10)]
         for digit in range(10):
             classification = self.classify_all_utterances(digit, gmms)
             confusion[digit, :] = classification
-        print(confusion)
-
-        fig, ax = plt.subplots()
-        mapper = GradientPlotter((1, 0, 0), (0, 1, 0), 1)
-
-        # Create a 2D list for cell colors
-        cell_colors = [[mapper(confusion[i][j]) for j in range(len(confusion[i]))] for i in range(len(confusion))]
-        ax.axis('off')
-        ax.table(cellText=confusion, cellColours=cell_colors, loc='center', cellLoc='center', colLabels=[f"GMM {i}" for i in range(10)],
-                 rowLabels=[f"Test {i}" for i in range(10)])
-        ax.set_title(f"Confusion Matrix for "
-                     f"{"Tied " if tied else "Distinct"} {covariance_type} "
-                     f"Using {"KMeans" if use_kmeans else "EM"} GMMs")
-        plt.show()
+        return confusion
 
     def filter_test_utterances(self, token):
         return self.test_df[self.test_df['Digit'] == token]
