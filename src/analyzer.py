@@ -3,11 +3,11 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.neighbors import KernelDensity
-from kmeans import k_means, plot_kmeans_contours, kmeans_component_gmm_helper
-from em import em, plot_em_contours, em_component_gmm_helper
-from util import compute_likelihood, get_comp_covariance, classify_utterance
+
 from dataparser import DataParser
-from gradientplotter import GradientPlotter
+from em import em, plot_em_contours, em_component_gmm_helper
+from kmeans import k_means, plot_kmeans_contours, kmeans_component_gmm_helper
+from util import compute_likelihood, get_comp_covariance, classify_utterance
 
 
 class Analyzer:
@@ -32,7 +32,7 @@ class Analyzer:
             9: 5,
         }
 
-    def plot_timeseries(self, token, index, num_mfccs):
+    def plot_timeseries(self, token, index, num_mfccs, ax):
         metadata = self.get_single_training_utterance(token, index)
         data = metadata[1]
         x = metadata[0]
@@ -42,15 +42,11 @@ class Analyzer:
             for j in range(len(x)):
                 temp.append(data[j][i])
             y.append(temp)
-        # plt.figure(1)  # comment out for making multiple graphs at once
         for k in range(len(y)):
-            legend = 'MFCC ' + str(k + 1)
-            plt.plot(x, y[k], label=legend)
-        plt.legend()
-        plt.xlabel('Analysis Window')
-        plt.ylabel('MFCCs')
-        plt.title('First ' + str(num_mfccs) + ' MFCCs For Single Utterance of ' + str(token))
-        # plt.show()  # comment out for making multiple graphs at once
+            ax.plot(x, y[k], label=f"MFCC {k + 1}")
+        ax.set_xlabel('Analysis Window', fontsize='small')
+        ax.set_ylabel('MFCCs', fontsize='small')
+        ax.set_title(f'MFCCs for an Utterance of {str(token)}', fontsize='small')
 
     def plot_scatter(self, token, index, comparisons):
         metadata = self.get_single_training_utterance(token, index)
@@ -204,8 +200,7 @@ class Analyzer:
 
     def get_single_training_utterance(self, token, index):
         filtered = self.train_df[self.train_df['Digit'] == token]
-        filtered = filtered[filtered['Index'] == index]
-        metadata = filtered.iloc[0]  # first token
+        metadata = filtered.iloc[index]  # first token
         data = metadata['MFCCs']
         x = [i for i in range(len(data))]
         return x, data
