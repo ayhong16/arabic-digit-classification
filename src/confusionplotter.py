@@ -1,22 +1,33 @@
+from pprint import pprint
+
 import numpy as np
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, colormaps
 
 from analyzer import Analyzer
-from gradientplotter import GradientPlotter
 
 
-def plot_confusion_matrix(confusion):
-    fig, ax = plt.subplots(figsize=(8, 6))
+def plot_confusion_matrix(confusion_matrix, title="Confusion Matrix"):
+    fig, (ax_matrix, ax_colorbar) = plt.subplots(1, 2,
+                                                 gridspec_kw={'width_ratios': [4, .1]},
+                                                 figsize=(9, 8))
 
-    mapper = GradientPlotter((1, 0, 0), (0, 1, 0), 1)
+    viridis_cmap = colormaps.get_cmap('Spectral')
+    im = ax_matrix.imshow(confusion_matrix, cmap=viridis_cmap)
 
-    # Create a 2D list for cell colors
-    cell_colors = [[mapper(confusion[i][j]) for j in range(len(confusion[i]))] for i in range(len(confusion))]
-    ax.axis('off')
-    ax.table(cellText=confusion, cellColours=cell_colors, loc='center', cellLoc='center',
-             colLabels=[f"GMM {i}" for i in range(10)],
-             rowLabels=[f"Test {i}" for i in range(10)])
-    ax.set_title("Confusion Matrix")
+    fig.suptitle(title)
+    ax_matrix.set_xticks(np.arange(10))
+    ax_matrix.set_yticks(np.arange(10))
+    ax_matrix.set_xticklabels([str(i) for i in range(10)])
+    ax_matrix.set_yticklabels([str(i) for i in range(10)])
+    ax_matrix.set_xlabel("Predicted Values")
+    ax_matrix.set_ylabel("True Values")
+
+    for i in range(10):
+        for j in range(10):
+            ax_matrix.text(j, i, "{:.2f}".format(confusion_matrix[i, j]), ha='center', va='center', color='white')
+
+    fig.colorbar(im, cax=ax_colorbar)
+    plt.tight_layout()
     plt.show()
 
 
@@ -30,7 +41,7 @@ def compute_precision(confusion):
         true_positives = confusion[i, i]
         false_positives = np.sum(confusion[:, i]) - true_positives
         precision = true_positives / (
-                    true_positives + false_positives + 1e-9)  # Adding a small value to avoid division by zero
+                true_positives + false_positives + 1e-9)  # Adding a small value to avoid division by zero
         precisions.append(precision)
     return precisions
 
