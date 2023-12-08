@@ -3,6 +3,7 @@ from pprint import pprint
 import numpy as np
 from matplotlib import pyplot as plt
 from analyzer import Analyzer
+from confusionplotter import compute_accuracy, compute_precision
 
 
 def kmeans_label(kmeans):
@@ -25,10 +26,15 @@ def plot_timeseries():
 
 def plot_pairwise_scatter():
     analyzer = Analyzer()
-    comps = [(1, 2), (2, 3), (1, 3)]
-    for d in range(10):
-        plt.figure(d)
-        analyzer.plot_scatter(d, 1, comps)
+    comps = [(1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8),
+             (8, 9), (9, 10), (10, 11), (11, 12), (12, 13)]
+    fig, axes = plt.subplots(nrows=1, ncols=13)
+    for ax in axes.flatten():
+        for d in range(10):
+            analyzer.plot_scatter(ax, d, comps)
+    plt.legend()
+    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.06, top=0.92, wspace=0.35, hspace=0.25)
+    plt.suptitle("2D Comparison of Various MFCCs")
     plt.show()
 
 
@@ -55,21 +61,28 @@ def plot_em_contours():
     plt.show()
 
 
-def create_cov_accuracy_map(analyzer):
+def create_cov_performance_map(analyzer):
     accuracy_map = {}
+    precision_map = {}
     for cov_type in ["full", "diag", "spherical"]:
         accuracy_map[cov_type] = {}
+        precision_map[cov_type] = {}
         for use_kmeans in [True, False]:
             label = kmeans_label(use_kmeans)
             accuracy_map[cov_type][label] = {}
+            precision_map[cov_type][label] = {}
             for tied in [True, False]:
                 accuracy_map[cov_type][label][tied_label(tied)] = 0
+                precision_map[cov_type][label][tied_label(tied)] = 0
     for cov_type in ["full", "diag", "spherical"]:
         for use_kmeans in [True, False]:
             for tied in [True, False]:
                 confusion = analyzer.compute_confusion_matrix(cov_type, use_kmeans, tied)
-                avg_accuracy = np.mean(np.diagonal(confusion))
+                avg_accuracy = np.mean(compute_accuracy(confusion))
+                avg_precision = np.mean(compute_precision(confusion))
                 accuracy_map[cov_type][kmeans_label(use_kmeans)][tied_label(tied)] = avg_accuracy
+                precision_map[cov_type][kmeans_label(use_kmeans)][tied_label(tied)] = avg_precision
+    return accuracy_map, precision_map
 
 
 def create_cluster_accuracy_map(analyzer):
@@ -89,52 +102,73 @@ def create_cluster_accuracy_map(analyzer):
     return accuracy_map
 
 
-def plot_cov_accuracy():
+def plot_cov_performance():
     analyzer = Analyzer()
-    # accuracy_map = create_cov_accuracy_map(analyzer)
-    accuracy_map = {'diag': {'em': {'distinct': 0.8675999999999998, 'tied': 0.8544},
-                             'kmeans': {'distinct': 0.5287, 'tied': 0.7313}},
-                    'full': {'em': {'distinct': 0.8968999999999999, 'tied': 0.8953},
-                             'kmeans': {'distinct': 0.8744, 'tied': 0.8795}},
-                    'spherical': {'em': {'distinct': 0.7268, 'tied': 0.7268},
-                                  'kmeans': {'distinct': 0.5287, 'tied': 0.7313}}}
+    # accuracy_map, precision_map = create_cov_performance_map(analyzer)
+    accuracy_map = {'diag': {'em': {'distinct': 0.8577, 'tied': 0.8577},
+                             'kmeans': {'distinct': 0.5286000000000001,
+                                        'tied': 0.7407999999999999}},
+                    'full': {'em': {'distinct': 0.9023, 'tied': 0.9023},
+                             'kmeans': {'distinct': 0.8754, 'tied': 0.8791}},
+                    'spherical': {'em': {'distinct': 0.7327, 'tied': 0.7327},
+                                  'kmeans': {'distinct': 0.5286000000000001,
+                                             'tied': 0.7407999999999999}}}
+    precision_map = {'diag': {'em': {'distinct': 0.8765173785778824, 'tied': 0.8765173785778824},
+                              'kmeans': {'distinct': 0.6456228540617243,
+                                         'tied': 0.7766820352299685}},
+                     'full': {'em': {'distinct': 0.9050832188255169, 'tied': 0.9050832188255169},
+                              'kmeans': {'distinct': 0.8887162531107379,
+                                         'tied': 0.8878313045295714}},
+                     'spherical': {'em': {'distinct': 0.7675264417271108,
+                                          'tied': 0.7675264417271108},
+                                   'kmeans': {'distinct': 0.6456228540617243,
+                                              'tied': 0.7766820352299685}}}
     pprint(accuracy_map)
+    pprint(precision_map)
 
     # plot bar graph
     categories = ["Distinct Full", "Tied Full", "Distinct Diagonal",
                   "Tied Diagonal", "Distinct Spherical", "Tied Spherical"]
-    em_vals = []
+    em_accuracy_vals = []
+    em_precision_vals = []
     for cov_type in ["full", "diag", "spherical"]:
         for tied in [False, True]:
-            em_vals.append(accuracy_map[cov_type][kmeans_label(False)][tied_label(tied)])
+            em_accuracy_vals.append(accuracy_map[cov_type][kmeans_label(False)][tied_label(tied)])
+            em_precision_vals.append(accuracy_map[cov_type][kmeans_label(False)][tied_label(tied)])
 
-    kmeans_vals = []
+    kmeans_accuracy_vals = []
+    kmeans_precision_vals = []
     for cov_type in ["full", "diag", "spherical"]:
         for tied in [False, True]:
-            kmeans_vals.append(accuracy_map[cov_type][kmeans_label(True)][tied_label(tied)])
+            kmeans_accuracy_vals.append(accuracy_map[cov_type][kmeans_label(True)][tied_label(tied)])
+            kmeans_precision_vals.append(accuracy_map[cov_type][kmeans_label(True)][tied_label(tied)])
 
+    fig, axes = plt.subplots(nrows=2, ncols=1)
+    plot_bar_graph(categories, em_accuracy_vals, kmeans_accuracy_vals, axes[0], "Accuracy")
+    plot_bar_graph(categories, em_precision_vals, kmeans_precision_vals, axes[1], "Precision")
+    plt.legend(fontsize='large')
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_bar_graph(categories, em_vals, kmeans_vals, ax, measurement):
     bar_width = 0.35
 
     # Create positions for each category
     x = np.arange(len(categories))
 
     # Plotting the grouped bar graph
-    plt.bar(x - bar_width / 2, em_vals, width=bar_width, label='EM')
-    plt.bar(x + bar_width / 2, kmeans_vals, width=bar_width, label='K-Means')
+    ax.bar(x - bar_width / 2, em_vals, width=bar_width, label='EM')
+    ax.bar(x + bar_width / 2, kmeans_vals, width=bar_width, label='K-Means')
 
     y_ticks = np.linspace(0.5, 1.0, 6)
-    plt.xlabel('Covariance Constraint')
-    plt.ylabel('Accuracy')
-    plt.ylim(0.5, 1.0)
-    plt.yticks(y_ticks)
-    plt.grid(True, zorder=1)
-    plt.title('Average Accuracy With Varying Parameters')
-    plt.xticks(x, categories)
-    plt.legend(fontsize='large')
-
-    plt.tight_layout()
-    plt.show()
-    plt.show()
+    ax.set_xlabel('Covariance Constraint')
+    ax.set_ylabel('Accuracy')
+    ax.set_ylim(0.5, 1.0)
+    ax.set_yticks(y_ticks)
+    ax.grid(True, zorder=1)
+    ax.set_title(f'Average {measurement} With Varying Parameters')
+    ax.set_xticks(x, categories)
 
 
 def plot_cluster_accuracy():
@@ -171,5 +205,5 @@ if __name__ == '__main__':
     # plot_kmeans_contours()
     # plot_likelihoods()
     # plot_em_contours()
-    plot_cov_accuracy()
+    # plot_cov_performance()
     # plot_cluster_accuracy()

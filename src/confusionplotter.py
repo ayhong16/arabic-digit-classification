@@ -20,10 +20,26 @@ def plot_confusion_matrix(confusion):
     plt.show()
 
 
+def compute_accuracy(confusion):
+    return np.diag(confusion)
+
+
+def compute_precision(confusion):
+    precisions = []
+    for i in range(confusion.shape[0]):
+        true_positives = confusion[i, i]
+        false_positives = np.sum(confusion[:, i]) - true_positives
+        precision = true_positives / (
+                    true_positives + false_positives + 1e-9)  # Adding a small value to avoid division by zero
+        precisions.append(precision)
+    return precisions
+
+
 def make_confusion_matrix():
     analyzer = Analyzer()
     confusion = analyzer.compute_confusion_matrix()
-    print(np.mean(np.diagonal(confusion)))
+    print(f'Accuracy: {np.mean(compute_accuracy(confusion))}')
+    print(f'Precision: {np.mean(compute_precision(confusion))}')
     plot_confusion_matrix(confusion)
 
 

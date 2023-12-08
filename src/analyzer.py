@@ -48,28 +48,24 @@ class Analyzer:
         ax.set_ylabel('MFCCs', fontsize='small')
         ax.set_title(f'Digit {str(token)}', fontsize='small')
 
-    def plot_scatter(self, token, index, comparisons):
-        metadata = self.get_single_training_utterance(token, index)
+    def plot_scatter(self, ax, token, comparisons):
+        # data = self.get_all_training_utterances(token)
+        metadata = self.get_single_training_utterance(token, 0)
         data = metadata[1]
         mapped_data = {}
         mfccs_needed = set()
         for comp1, comp2 in comparisons:
             mfccs_needed.add(comp1)
             mfccs_needed.add(comp2)
-        for i in range(len(data)):
-            temp = []
-            if (i + 1) in mfccs_needed:
-                for j in range(len(data)):
-                    temp.append(data[j][i])
-            mapped_data[i + 1] = temp
+        for mfcc in mfccs_needed:
+            mapped_data[mfcc] = data[:, mfcc - 1]
         # plt.figure(2)  # comment out for making multiple graphs at once
         for comp in comparisons:
             first_comp = comp[0]
             second_comp = comp[1]
-            legend = "MFCC " + str(first_comp) + "(y) vs. MFCC " + str(second_comp) + "(x)"
-            plt.scatter(mapped_data[second_comp], mapped_data[first_comp], label=legend)
-        plt.legend()
-        plt.title("Scatter Plot of Various MFCC Relationships in a Single Utterance of " + str(token))
+            ax.scatter(mapped_data[second_comp], mapped_data[first_comp], label=f"Digit {token}")
+        ax.set_xlabel(f"MFCC {comparisons[0][1]}")
+        ax.set_ylabel(f"MFCC {comparisons[0][0]}")
         # plt.show()  # comment out for making multiple graphs at once
 
     def plot_kmeans_gmm(self, token, comparisons, n_clusters):
@@ -203,4 +199,4 @@ class Analyzer:
         metadata = filtered.iloc[index]  # first token
         data = metadata['MFCCs']
         x = [i for i in range(len(data))]
-        return x, data
+        return x, np.array(data)

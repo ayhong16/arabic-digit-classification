@@ -25,6 +25,3 @@ def get_comp_covariance(x, y, covar):
     cov[1][0] = covar[y][x]
     cov[1][1] = covar[y][y]
     return cov
-
-
-# def plot_accuracy(confusion, digit, )
