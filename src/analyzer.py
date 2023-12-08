@@ -28,7 +28,7 @@ class Analyzer:
             5: 3,
             6: 4,
             7: 4,
-            8: 4,
+            8: 5,
             9: 5,
         }
 
@@ -46,7 +46,7 @@ class Analyzer:
             ax.plot(x, y[k], label=f"MFCC {k + 1}")
         ax.set_xlabel('Analysis Window', fontsize='small')
         ax.set_ylabel('MFCCs', fontsize='small')
-        ax.set_title(f'MFCCs for an Utterance of {str(token)}', fontsize='small')
+        ax.set_title(f'Digit {str(token)}', fontsize='small')
 
     def plot_scatter(self, token, index, comparisons):
         metadata = self.get_single_training_utterance(token, index)

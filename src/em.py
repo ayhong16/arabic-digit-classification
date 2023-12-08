@@ -5,7 +5,7 @@ from GaussianMixture import GaussianMixture
 
 
 def em(n_components, data, cov_type):
-    gmm = GaussianMixture(n_components=n_components, covariance_type=cov_type)
+    gmm = GaussianMixture(n_components=n_components, covariance_type=cov_type, random_state=5)
     gmm.fit(data)
     labels = gmm.predict(data)
     means = gmm.means_
