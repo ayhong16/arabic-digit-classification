@@ -93,7 +93,7 @@ class Analyzer:
                 else:
                     ax.scatter(coords[:, 0], coords[:, 1], s=.1, color=c, alpha=.8)
                 cov = get_comp_covariance(second_comp - 1, first_comp - 1, cluster_info[key]["cov"])
-                plot_kmeans_contours(coords, cov, c, ax)
+                plot_kmeans_contours(coords, cov, ax)
                 color_ind += 1
             # ax.set_title("MFCC " + str(first_comp) + "(y) vs. MFCC" + str(second_comp) + "(x)")
             if ax is None:
@@ -104,7 +104,7 @@ class Analyzer:
                 ax.set_title("K-Means Clustering")
                 ax.set_xlabel("MFCC " + str(second_comp))
                 ax.set_ylabel("MFCC " + str(first_comp))
-                ax.axis("equal")
+                ax.axis('equal')
         # fig.suptitle("K-Means GMMs for Various 2D Plots for Digit " + str(token))
         # plt.tight_layout()
 
@@ -128,14 +128,14 @@ class Analyzer:
                 else:
                     plt.scatter(coords[:, 0], coords[:, 1], s=.1, c=c, alpha=.8)
                 cov = get_comp_covariance(second_comp - 1, first_comp - 1, cluster_info[key]["cov"])
-                plot_em_contours([key[second_comp - 1], key[first_comp - 1]], cov, c, coords, ax)
+                plot_em_contours([key[second_comp - 1], key[first_comp - 1]], cov, coords, ax)
                 color_ind += 1
             # ax.set_title("MFCC " + str(first_comp) + "(y) vs. MFCC" + str(second_comp) + "(x)")
             if ax is not None:
                 ax.set_title(f"EM Clustering")
                 ax.set_xlabel("MFCC " + str(second_comp))
                 ax.set_ylabel("MFCC " + str(first_comp))
-                ax.axis("equal")
+                ax.axis('equal')
             else:
                 plt.title(f"EM Clustering")
                 plt.xlabel("MFCC " + str(second_comp))

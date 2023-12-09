@@ -49,7 +49,7 @@ def fix_em_cov_output(self, covariance, covariance_type, covariance_tied, k):
     return ret
 
 
-def plot_em_contours(mean, cov, color, coords, ax=None):
+def plot_em_contours(mean, cov, coords, ax=None):
     maxx_diff = max([abs(x[0] - mean[0]) for x in coords])
     maxy_diff = max([abs(x[1] - mean[1]) for x in coords])
     x = np.linspace(mean[0] - maxx_diff, mean[0] + maxx_diff, 1000)
@@ -60,9 +60,9 @@ def plot_em_contours(mean, cov, color, coords, ax=None):
     pos[:, :, 0] = X
     pos[:, :, 1] = Y
     if ax is None:
-        plt.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)
+        plt.contour(X, Y, z.pdf(pos), colors='black', alpha=.5)
     else:
-        ax.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)
+        ax.contour(X, Y, z.pdf(pos), colors='black', alpha=.5)
 
 
 def em_component_gmm_helper(cluster_info):

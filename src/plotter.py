@@ -232,16 +232,6 @@ def plot_greedy_mfcc():
     pass
 
 
-def test():
-    analyzer = Analyzer()
-    # analyzer.cov["tied"] = False
-    # analyzer.cov["cov_type"] = "full"
-    confusion = analyzer.compute_confusion_matrix()
-    print(f'Accuracy: {np.mean(compute_accuracy(confusion))}')
-    print(f'Precision: {np.mean(compute_precision(confusion))}')
-    plot_confusion_matrix(confusion)
-
-
 if __name__ == '__main__':
     # plot_timeseries()
     # plot_pairwise_scatter()
@@ -253,4 +243,3 @@ if __name__ == '__main__':
     # plot_cov_performance()
     # plot_cluster_accuracy()
     # plot_greedy_mfcc()
-    # test()

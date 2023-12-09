@@ -37,7 +37,7 @@ def full_covar(data):
     return np.cov(data, rowvar=False)
 
 
-def plot_kmeans_contours(data, cov, color, ax=None):
+def plot_kmeans_contours(data, cov, ax=None):
     mean = np.mean(data, axis=0)
     maxx_diff = max([abs(x[0] - mean[0]) for x in data])
     maxy_diff = max([abs(x[1] - mean[1]) for x in data])
@@ -49,9 +49,9 @@ def plot_kmeans_contours(data, cov, color, ax=None):
     pos[:, :, 0] = X
     pos[:, :, 1] = Y
     if ax is None:
-        plt.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)
+        plt.contour(X, Y, z.pdf(pos), colors='black', alpha=.5)
     else:
-        ax.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)
+        ax.contour(X, Y, z.pdf(pos), colors='black', alpha=.5)
 
 
 def kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied):
