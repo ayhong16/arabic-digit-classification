@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.neighbors import KernelDensity
 
 from dataparser import DataParser
-from em import em, plot_em_contours, em_component_gmm_helper
+from em import em, plot_em_contours, em_component_gmm_helper, fix_em_cov_input
 from kmeans import k_means, plot_kmeans_contours, kmeans_component_gmm_helper
 from util import compute_likelihood, get_comp_covariance, classify_utterance
 
@@ -17,7 +17,7 @@ class Analyzer:
         self.train_df = parser.train_df
         self.test_df = parser.test_df
         self.mfccs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-        self.cov = {"tied": False, "cov_type": "full"}
+        self.cov = {"tied": True, "cov_type": "spherical"}
         self.use_kmeans = False
         self.phoneme_map = {
             0: 4,
@@ -91,11 +91,13 @@ class Analyzer:
         # fig.suptitle("K-Means GMMs for Various 2D Plots for Digit " + str(token))
         # plt.tight_layout()
 
-    def plot_em_gmm(self, token, comparisons, n_components, cov_type, ax):
+    def plot_em_gmm(self, token, comparisons, ax=None):
         data = self.get_all_training_utterances(token)
         # fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 6))
         colors = ["c", "r", "g", "m", 'y']
-        cluster_info = em(n_components, data, cov_type)
+        cov_in = fix_em_cov_input(self.cov["tied"], self.cov["cov_type"])
+        n_components = self.phoneme_map[token]
+        cluster_info = em(self.mfccs, n_components, data, cov_in)
         for i in range(len(comparisons)):
             first_comp = comparisons[i][0]
             second_comp = comparisons[i][1]
@@ -104,14 +106,22 @@ class Analyzer:
                 c = colors[color_ind]
                 coords = np.column_stack(((cluster_info[key]["data"][:, second_comp - 1],
                                            cluster_info[key]["data"][:, first_comp - 1])))
-                ax.scatter(coords[:, 0], coords[:, 1], s=.1, c=c, alpha=.8)
+                if ax is not None:
+                    ax.scatter(coords[:, 0], coords[:, 1], s=.1, c=c, alpha=.8)
+                else:
+                    plt.scatter(coords[:, 0], coords[:, 1], s=.1, c=c, alpha=.8)
                 cov = get_comp_covariance(second_comp - 1, first_comp - 1, cluster_info[key]["cov"])
-                plot_em_contours([key[second_comp - 1], key[first_comp - 1]], cov, c, ax, coords)
+                plot_em_contours([key[second_comp - 1], key[first_comp - 1]], cov, c, coords, ax)
                 color_ind += 1
             # ax.set_title("MFCC " + str(first_comp) + "(y) vs. MFCC" + str(second_comp) + "(x)")
-            ax.set_title("EM Clustering")
-            ax.set_xlabel("MFCC " + str(second_comp))
-            ax.set_ylabel("MFCC " + str(first_comp))
+            if ax is not None:
+                ax.set_title(f"Digit {token} {"Tied" if self.cov['tied'] else "Distinct"} {self.cov["cov_type"]} Covariance EM Clustering")
+                ax.set_xlabel("MFCC " + str(second_comp))
+                ax.set_ylabel("MFCC " + str(first_comp))
+            else:
+                plt.title(f"Digit {token} {"Tied" if self.cov['tied'] else "Distinct"} {self.cov["cov_type"]} Covariance EM Clustering")
+                plt.xlabel("MFCC " + str(second_comp))
+                plt.ylabel("MFCC " + str(first_comp))
         # fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))
         # plt.tight_layout()
 
@@ -138,7 +148,8 @@ class Analyzer:
             cluster_info = k_means(n_clusters, data)
             components = kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied)
         else:
-            cluster_info = em(n_clusters, data, covariance_type)
+            cov_in = fix_em_cov_input(tied, covariance_type)
+            cluster_info = em(self.mfccs, n_clusters, data, cov_type=cov_in)
             components = em_component_gmm_helper(cluster_info)
         cov_tied = "tied " if tied else "distinct "
         ret = {
@@ -184,6 +195,12 @@ class Analyzer:
 
     def compute_confusion_matrix(self, cov_type=None, use_kmeans=None, tied=None):
         confusion = np.zeros((10, 10))
+        if cov_type is None:
+            cov_type = self.cov["cov_type"]
+        if use_kmeans is None:
+            use_kmeans = self.use_kmeans
+        if tied is None:
+            tied = self.cov["tied"]
         gmms = [self.estimate_gmm_params(digit, cov_type, use_kmeans, tied) for digit in range(10)]
         for digit in range(10):
             classification = self.classify_all_utterances(digit, gmms)
@@ -206,3 +223,4 @@ class Analyzer:
         data = metadata['MFCCs']
         x = [i for i in range(len(data))]
         return x, np.array(data)
+

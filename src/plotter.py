@@ -3,7 +3,7 @@ from pprint import pprint
 import numpy as np
 from matplotlib import pyplot as plt
 from analyzer import Analyzer
-from confusionplotter import compute_accuracy, compute_precision
+from confusionplotter import compute_accuracy, compute_precision, plot_confusion_matrix
 
 
 def kmeans_label(kmeans):
@@ -55,9 +55,11 @@ def plot_likelihoods():
 
 def plot_em_contours():
     analyzer = Analyzer()
-    comps = [(1, 2), (2, 3), (1, 3)]
-    for d in range(10):
-        analyzer.plot_em_gmm(d, comps, analyzer.phoneme_map[d], "full")
+    comps = [(1, 2)]
+    analyzer.plot_em_gmm(0, comps)
+    # comps = [(1, 2), (2, 3), (1, 3)]
+    # for d in range(10):
+    #     analyzer.plot_em_gmm(d, comps, analyzer.phoneme_map[d])
     plt.show()
 
 
@@ -66,7 +68,7 @@ def plot_em_kmeans_contours():
     comps = [(1, 2)]
     for d in range(10):
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
-        analyzer.plot_em_gmm(d, comps, analyzer.phoneme_map[d], "full", axes[0])
+        analyzer.plot_em_gmm(d, comps, analyzer.phoneme_map[d], axes[0])
         analyzer.plot_kmeans_gmm(d, comps, analyzer.phoneme_map[d], axes[1])
         plt.suptitle(f"Digit {d} Comparison of EM and K-Means")
         plt.tight_layout()
@@ -117,18 +119,18 @@ def create_cluster_accuracy_map(analyzer):
 def plot_cov_performance():
     analyzer = Analyzer()
     # accuracy_map, precision_map = create_cov_performance_map(analyzer)
-    accuracy_map = {'diag': {'em': {'distinct': 85.77, 'tied': 85.77},
+    accuracy_map = {'diag': {'em': {'distinct': 85.77, 'tied': 82.46},
                              'kmeans': {'distinct': 52.86000000000001, 'tied': 74.07999999999998}},
-                    'full': {'em': {'distinct': 90.23, 'tied': 90.23},
+                    'full': {'em': {'distinct': 90.23, 'tied': 88.36},
                              'kmeans': {'distinct': 87.53999999999999, 'tied': 87.91}},
-                    'spherical': {'em': {'distinct': 73.27, 'tied': 73.27},
+                    'spherical': {'em': {'distinct': 73.27, 'tied': 74.09},
                                   'kmeans': {'distinct': 52.86000000000001, 'tied': 74.07999999999998}}}
-    precision_map = {'diag': {'em': {'distinct': .8765173785778823, 'tied': .8765173785778823},
-                              'kmeans': {'distinct': .6456228540617242, 'tied': .7766820352299685}},
-                     'full': {'em': {'distinct': .9050832188255168, 'tied': .9050832188255168},
-                              'kmeans': {'distinct': .8887162531107379, 'tied': .8878313045295714}},
-                     'spherical': {'em': {'distinct': .7675264417271109, 'tied': .7675264417271109},
-                                   'kmeans': {'distinct': .6456228540617242, 'tied': .7766820352299685}}}
+    precision_map = {'diag': {'em': {'distinct': 0.8765173785778824, 'tied': 0.8443208527942513},
+                              'kmeans': {'distinct': 0.6456228540617243, 'tied': 0.7766820352299685}},
+                     'full': {'em': {'distinct': 0.9050832188255169, 'tied': 0.8887451716946844},
+                              'kmeans': {'distinct': 0.8887162531107379, 'tied': 0.8878313045295714}},
+                     'spherical': {'em': {'distinct': 0.7675264417271108, 'tied': 0.7756454945695905},
+                                   'kmeans': {'distinct': 0.6456228540617243, 'tied': 0.7766820352299685}}}
     pprint(accuracy_map)
     pprint(precision_map)
 
@@ -209,8 +211,33 @@ def plot_cluster_accuracy():
     plt.show()
 
 
+def plot_tied_distinct_contours():
+    analyzer = Analyzer()
+    comps = [(1, 2)]
+    for d in range(10):
+        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
+        analyzer.cov["tied"] = True
+        analyzer.plot_em_gmm(d, comps, axes[0])
+        analyzer.cov["tied"] = False
+        analyzer.plot_em_gmm(d, comps, axes[1], )
+        plt.suptitle(f"Digit {d} Comparison of Tied and Distinct Covariance Matrices")
+        # plt.savefig(f"../plots/tied_vs_distinct/digit_{d}.png")
+        plt.tight_layout()
+    plt.show()
+
+
 def plot_greedy_mfcc():
     pass
+
+
+def test():
+    analyzer = Analyzer()
+    # analyzer.cov["tied"] = False
+    # analyzer.cov["cov_type"] = "full"
+    confusion = analyzer.compute_confusion_matrix()
+    print(f'Accuracy: {np.mean(compute_accuracy(confusion))}')
+    print(f'Precision: {np.mean(compute_precision(confusion))}')
+    plot_confusion_matrix(confusion)
 
 
 if __name__ == '__main__':
@@ -218,8 +245,10 @@ if __name__ == '__main__':
     # plot_pairwise_scatter()
     # plot_kmeans_contours()
     # plot_em_kmeans_contours()
+    # plot_tied_distinct_contours()
     # plot_likelihoods()
     # plot_em_contours()
-    # plot_cov_performance()
-    plot_cluster_accuracy()
+    plot_cov_performance()
+    # plot_cluster_accuracy()
     # plot_greedy_mfcc()
+    # test()
