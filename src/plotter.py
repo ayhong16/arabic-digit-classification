@@ -161,6 +161,37 @@ def plot_cov_performance():
     plt.show()
 
 
+def create_mfcc_accuracy_map(analyzer):
+    accuracy_map = {}
+    mfccs = range(13)
+    for n_keep in range(1, 14):
+        accuracy_map[n_keep] = {
+            "accuracy": 0,
+            "mfccs": []
+        }
+    best_mfccs = []
+    for n_keep in range(1, 14):
+        best_mfcc = None
+        best_accuracy = 0
+        for mfcc in mfccs:
+            if mfcc not in best_mfccs:
+                temp = best_mfccs.copy()
+                temp.append(mfcc)
+                confusion = analyzer.compute_confusion_matrix(mfccs=temp)
+                accuracy = np.mean(compute_accuracy(confusion)) * 100
+                if accuracy > best_accuracy:
+                    best_accuracy = accuracy
+                    best_mfcc = mfcc
+                pprint(f"Testing mfccs: {temp}")
+                pprint(f"Resulting Accuracy: {accuracy}. Best Accuracy: {best_accuracy}")
+        best_mfccs.append(best_mfcc)
+        accuracy_map[n_keep]["accuracy"] = best_accuracy
+        accuracy_map[n_keep]["mfccs"] = best_mfccs.copy()
+        pprint(f"Updated Best MFCCs: {best_mfccs}")
+        pprint(f"Updated Accuracy map: {accuracy_map}")
+    return accuracy_map
+
+
 def plot_bar_graph(categories, em_vals, kmeans_vals, ax, isAccuracy):
     bar_width = 0.35
 
@@ -216,7 +247,7 @@ def plot_cluster_accuracy():
 def plot_tied_distinct_contours():
     analyzer = Analyzer()
     comps = [(1, 2)]
-    for d in range(10):
+    for d in range(4, 5):
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
         analyzer.cov["tied"] = True
         analyzer.plot_em_gmm(d, comps, axes[0])
@@ -229,17 +260,50 @@ def plot_tied_distinct_contours():
 
 
 def plot_greedy_mfcc():
-    pass
+    analyzer = Analyzer()
+    # accuracy_map = create_mfcc_accuracy_map(analyzer)
+    accuracy_map = {1: {'accuracy': 38.69, 'mfccs': [4]},
+                    2: {'accuracy': 64.19, 'mfccs': [4, 2]},
+                    3: {'accuracy': 76.66000000000001, 'mfccs': [4, 2, 1]},
+                    4: {'accuracy': 83.05000000000001, 'mfccs': [4, 2, 1, 7]},
+                    5: {'accuracy': 86.76, 'mfccs': [4, 2, 1, 7, 5]},
+                    6: {'accuracy': 88.66999999999999, 'mfccs': [4, 2, 1, 7, 5, 10]},
+                    7: {'accuracy': 88.91, 'mfccs': [4, 2, 1, 7, 5, 10, 12]},
+                    8: {'accuracy': 89.21000000000001, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6]},
+                    9: {'accuracy': 90.60000000000001, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8]},
+                    10: {'accuracy': 90.27, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9]},
+                    11: {'accuracy': 89.72999999999999, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9, 11]},
+                    12: {'accuracy': 90.27999999999999, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9, 11, 3]},
+                    13: {'accuracy': 90.23, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9, 11, 3, 0]}}
+    num_mfccs = [i for i in range(1, 14)]
+    accuracy_vals = []
+    for n_keep in num_mfccs:
+        accuracy_vals.append(accuracy_map[n_keep]["accuracy"])
+    plt.figure(figsize=(10, 6))
+    plt.plot(num_mfccs, accuracy_vals, marker='o')
+    max_index = accuracy_vals.index(max(accuracy_vals))
+    plt.scatter(num_mfccs[max_index], accuracy_vals[max_index], s=150, color='none', edgecolor='red',
+                linewidth=2, zorder=5)
+    plt.annotate(f'Max: {max(accuracy_vals):.2f}', (num_mfccs[max_index] + .1, accuracy_vals[max_index] - .5),
+                 xytext=(num_mfccs[max_index] + 0.4, accuracy_vals[max_index] - 7),
+                 arrowprops=dict(facecolor='black', arrowstyle='->'))
+    plt.xlabel('Number of MFCCs Used')
+    plt.ylabel('Accuracy (%)')
+    plt.title('Evolution of Accuracy with Increasing Number of MFCCs')
+    plt.grid(True)
+    plt.savefig("../plots/greedy_mfcc_results.png")
+    plt.show()
 
 
 if __name__ == '__main__':
     # plot_timeseries()
     # plot_pairwise_scatter()
     # plot_kmeans_contours()
-    plot_em_kmeans_contours()
+    # plot_em_kmeans_contours()
     # plot_tied_distinct_contours()
     # plot_likelihoods()
     # plot_em_contours()
     # plot_cov_performance()
     # plot_cluster_accuracy()
-    # plot_greedy_mfcc()
+    plot_greedy_mfcc()
+    # plot_tied_distinct_contours()

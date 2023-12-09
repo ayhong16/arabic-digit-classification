@@ -23,32 +23,6 @@ def em(mfccs, n_components, data, cov_type):
     return cluster_info
 
 
-def fix_em_cov_output(self, covariance, covariance_type, covariance_tied, k):
-    mfcc_length = len([x for x in self.hyperparams["mfcc_indexes"] if x >= 0])
-    if covariance_type == "full":
-        if covariance_tied:
-            ret = np.asarray([covariance] * k)
-        else:
-            ret = covariance
-    elif covariance_type == "diagonal" or covariance_type == "diag":
-        if covariance_tied:
-            ret = np.asarray([np.diag(cov) for cov in covariance])
-        else:
-            ret = np.asarray([np.diag(cov) for cov in covariance])
-    elif covariance_type == "spherical":
-        if covariance_tied:
-            ret = np.asarray([np.diag([covariance] * mfcc_length)] * k)
-        else:
-            ret = np.asarray([np.diag([cov] * mfcc_length) for cov in covariance])
-    else:
-        ret = ValueError("Invalid covariance type: " + covariance_type)
-    assert len(ret.shape) == 3
-    assert ret.shape[0] == k
-    assert ret.shape[1] == mfcc_length
-    assert ret.shape[2] == mfcc_length
-    return ret
-
-
 def plot_em_contours(mean, cov, coords, ax=None):
     maxx_diff = max([abs(x[0] - mean[0]) for x in coords])
     maxy_diff = max([abs(x[1] - mean[1]) for x in coords])

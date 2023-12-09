@@ -16,8 +16,8 @@ class Analyzer:
         parser = DataParser()
         self.train_df = parser.train_df
         self.test_df = parser.test_df
-        self.mfccs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-        self.cov = {"tied": True, "cov_type": "spherical"}
+        self.mfccs = [4, 2, 1, 7, 5, 10, 12, 6, 8]
+        self.cov = {"tied": False, "cov_type": "full"}
         self.use_kmeans = False
         self.phoneme_map = {
             0: 4,
@@ -100,6 +100,7 @@ class Analyzer:
                 plt.title(f"K-Means Clustering")
                 plt.xlabel("MFCC " + str(second_comp))
                 plt.ylabel("MFCC " + str(first_comp))
+                plt.axis('equal')
             else:
                 ax.set_title("K-Means Clustering")
                 ax.set_xlabel("MFCC " + str(second_comp))
@@ -132,26 +133,19 @@ class Analyzer:
                 color_ind += 1
             # ax.set_title("MFCC " + str(first_comp) + "(y) vs. MFCC" + str(second_comp) + "(x)")
             if ax is not None:
-                ax.set_title(f"EM Clustering")
+                ax.set_title(f"{"Tied" if self.cov["tied"] else "Distinct"} {self.cov["cov_type"]} Covariance")
                 ax.set_xlabel("MFCC " + str(second_comp))
                 ax.set_ylabel("MFCC " + str(first_comp))
                 ax.axis('equal')
             else:
-                plt.title(f"EM Clustering")
+                plt.title(f"{"Tied" if self.cov["tied"] else "Distinct"} {self.cov["cov_type"]} Covariance")
                 plt.xlabel("MFCC " + str(second_comp))
                 plt.ylabel("MFCC " + str(first_comp))
+                plt.axis('equal')
         # fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))
         # plt.tight_layout()
 
-    def estimate_gmm_params(self, token, covariance_type=None, use_kmeans=None, tied=None):
-        """
-        Estimates a GMM based on the parameters specified in the param_map.
-        :param tied:
-        :param use_kmeans:
-        :param covariance_type:
-        :param token: the number to estimate the GMM for
-        :return: dictionary containing the parameters of the specified GMM
-        """
+    def estimate_gmm_params(self, token, covariance_type=None, use_kmeans=None, tied=None, mfccs=None):
         start = time.time()
         n_clusters = self.phoneme_map[token]
         if covariance_type is None:
@@ -160,14 +154,16 @@ class Analyzer:
             tied = self.cov["tied"]
         if use_kmeans is None:
             use_kmeans = self.use_kmeans
+        if mfccs is None:
+            mfccs = self.mfccs
         data = self.get_all_training_utterances(token)
-        data = data[:, self.mfccs]
+        data = data[:, mfccs]
         if use_kmeans:
             cluster_info = k_means(n_clusters, data)
             components = kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied)
         else:
             cov_in = fix_em_cov_input(tied, covariance_type)
-            cluster_info = em(self.mfccs, n_clusters, data, cov_type=cov_in)
+            cluster_info = em(mfccs, n_clusters, data, cov_type=cov_in)
             components = em_component_gmm_helper(cluster_info)
         cov_tied = "tied " if tied else "distinct "
         ret = {
@@ -175,7 +171,7 @@ class Analyzer:
             "number of components": n_clusters,
             "covariance type": cov_tied + covariance_type,
             "components": components,
-            "mfccs": self.mfccs
+            "mfccs": mfccs
         }
         end = time.time()
         print(f"Time to train {token}: {end - start}")
@@ -211,7 +207,7 @@ class Analyzer:
         print(f"Time to classify {token}: {end - start}")
         return np.round(classifications, 3)
 
-    def compute_confusion_matrix(self, cov_type=None, use_kmeans=None, tied=None):
+    def compute_confusion_matrix(self, cov_type=None, use_kmeans=None, tied=None, mfccs=None):
         confusion = np.zeros((10, 10))
         if cov_type is None:
             cov_type = self.cov["cov_type"]
@@ -219,7 +215,9 @@ class Analyzer:
             use_kmeans = self.use_kmeans
         if tied is None:
             tied = self.cov["tied"]
-        gmms = [self.estimate_gmm_params(digit, cov_type, use_kmeans, tied) for digit in range(10)]
+        if mfccs is None:
+            mfccs = self.mfccs
+        gmms = [self.estimate_gmm_params(digit, cov_type, use_kmeans, tied, mfccs) for digit in range(10)]
         for digit in range(10):
             classification = self.classify_all_utterances(digit, gmms)
             confusion[digit, :] = classification
