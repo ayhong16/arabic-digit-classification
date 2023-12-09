@@ -26,15 +26,18 @@ def plot_timeseries():
 
 def plot_pairwise_scatter():
     analyzer = Analyzer()
-    comps = [(1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8),
-             (8, 9), (9, 10), (10, 11), (11, 12), (12, 13)]
-    fig, axes = plt.subplots(nrows=1, ncols=13)
-    for ax in axes.flatten():
-        for d in range(10):
-            analyzer.plot_scatter(ax, d, comps)
-    plt.legend()
-    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.06, top=0.92, wspace=0.35, hspace=0.25)
-    plt.suptitle("2D Comparison of Various MFCCs")
+    comps = [(1, 2), (1, 6), (1, 13)]
+    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(16, 14))
+    for ax_num, ax in enumerate(axes.flatten()):
+        for d in range(2, 3):
+            if ax_num < 3:
+                analyzer.plot_scatter(ax, d, [comps[ax_num]])
+            else:
+                analyzer.plot_em_gmm(d, [comps[ax_num - 3]], ax)
+    plt.subplots_adjust(left=0.07, right=0.95, bottom=0.06, top=0.92, wspace=0.35, hspace=0.25)
+    plt.legend(loc="best")
+    plt.suptitle("Various 2D Cross Sections of all MFCCs for Digit 2")
+    plt.savefig("../plots/mfcc_em_cross_sections.png")
     plt.show()
 
 
@@ -247,15 +250,32 @@ def plot_cluster_accuracy():
 def plot_tied_distinct_contours():
     analyzer = Analyzer()
     comps = [(1, 2)]
-    for d in range(4, 5):
+    for d in range(1, 2):
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
         analyzer.cov["tied"] = True
         analyzer.plot_em_gmm(d, comps, axes[0])
         analyzer.cov["tied"] = False
-        analyzer.plot_em_gmm(d, comps, axes[1], )
+        analyzer.plot_em_gmm(d, comps, axes[1])
         plt.suptitle(f"Digit {d} Comparison of Tied and Distinct Covariance Matrices")
-        # plt.savefig(f"../plots/tied_vs_distinct/digit_{d}.png")
         plt.tight_layout()
+        plt.savefig(f"../plots/tied_vs_distinct_digit_{d}.png")
+    plt.show()
+
+
+def plot_all_cov_contours():
+    analyzer = Analyzer()
+    comps = [(1, 2)]
+    for d in range(5, 6):
+        fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 6))
+        analyzer.cov["cov_type"] = "full"
+        analyzer.plot_em_gmm(d, comps, axes[0])
+        analyzer.cov["cov_type"] = "diag"
+        analyzer.plot_em_gmm(d, comps, axes[1])
+        analyzer.cov["cov_type"] = "spherical"
+        analyzer.plot_em_gmm(d, comps, axes[2])
+        plt.suptitle(f"Digit {d} Comparison of Full, Diag, & Spherical Covariance Matrices")
+        plt.tight_layout()
+        plt.savefig(f"../plots/all_cov_comparison_digit_{d}.png")
     plt.show()
 
 
@@ -305,5 +325,6 @@ if __name__ == '__main__':
     # plot_em_contours()
     # plot_cov_performance()
     # plot_cluster_accuracy()
-    plot_greedy_mfcc()
+    # plot_greedy_mfcc()
     # plot_tied_distinct_contours()
+    plot_all_cov_contours()

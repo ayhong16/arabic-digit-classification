@@ -16,7 +16,8 @@ class Analyzer:
         parser = DataParser()
         self.train_df = parser.train_df
         self.test_df = parser.test_df
-        self.mfccs = [4, 2, 1, 7, 5, 10, 12, 6, 8]
+        # self.mfccs = [4, 2, 1, 7, 5, 10, 12, 6, 8]
+        self.mfccs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
         self.cov = {"tied": False, "cov_type": "full"}
         self.use_kmeans = False
         self.phoneme_map = {
@@ -49,9 +50,9 @@ class Analyzer:
         ax.set_title(f'Digit {str(token)}', fontsize='small')
 
     def plot_scatter(self, ax, token, comparisons):
-        # data = self.get_all_training_utterances(token)
-        metadata = self.get_single_training_utterance(token, 0)
-        data = metadata[1]
+        data = self.get_all_training_utterances(token)
+        # metadata = self.get_single_training_utterance(token, 0)
+        # data = data[:, self.mfccs]
         mapped_data = {}
         mfccs_needed = set()
         for comp1, comp2 in comparisons:
@@ -63,9 +64,10 @@ class Analyzer:
         for comp in comparisons:
             first_comp = comp[0]
             second_comp = comp[1]
-            ax.scatter(mapped_data[second_comp], mapped_data[first_comp], label=f"Digit {token}")
+            ax.scatter(mapped_data[second_comp], mapped_data[first_comp], label=f"Digit {token}", s=.1)
         ax.set_xlabel(f"MFCC {comparisons[0][1]}")
         ax.set_ylabel(f"MFCC {comparisons[0][0]}")
+
         # plt.show()  # comment out for making multiple graphs at once
 
     def plot_kmeans_gmm(self, token, comparisons, ax=None):
@@ -100,12 +102,12 @@ class Analyzer:
                 plt.title(f"K-Means Clustering")
                 plt.xlabel("MFCC " + str(second_comp))
                 plt.ylabel("MFCC " + str(first_comp))
-                plt.axis('equal')
+                # plt.axis('equal')
             else:
                 ax.set_title("K-Means Clustering")
                 ax.set_xlabel("MFCC " + str(second_comp))
                 ax.set_ylabel("MFCC " + str(first_comp))
-                ax.axis('equal')
+                # ax.axis('equal')
         # fig.suptitle("K-Means GMMs for Various 2D Plots for Digit " + str(token))
         # plt.tight_layout()
 
@@ -136,12 +138,13 @@ class Analyzer:
                 ax.set_title(f"{"Tied" if self.cov["tied"] else "Distinct"} {self.cov["cov_type"]} Covariance")
                 ax.set_xlabel("MFCC " + str(second_comp))
                 ax.set_ylabel("MFCC " + str(first_comp))
-                ax.axis('equal')
+                if self.cov["cov_type"] == "spherical":
+                    ax.axis('equal')
             else:
-                plt.title(f"{"Tied" if self.cov["tied"] else "Distinct"} {self.cov["cov_type"]} Covariance")
+                plt.title(f"EM Clustering")
                 plt.xlabel("MFCC " + str(second_comp))
                 plt.ylabel("MFCC " + str(first_comp))
-                plt.axis('equal')
+                # plt.axis('equal')
         # fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))
         # plt.tight_layout()
 
