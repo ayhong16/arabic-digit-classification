@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import pyplot as plt
 from scipy.stats import multivariate_normal
 from sklearn.cluster import KMeans
 
@@ -18,7 +19,7 @@ def k_means(n_clusters, data):
 
 def spherical_covar(data):
     num_dims = data.shape[1]
-    col_stack = data.reshape((len(data) * 13, 1))
+    col_stack = data.reshape((len(data) * num_dims, 1))
     cov = np.cov(col_stack, rowvar=False)
     return np.identity(num_dims) * cov
 
@@ -26,7 +27,7 @@ def spherical_covar(data):
 def diagonal_covar(data):
     covars = []
     num_dims = data.shape[1]
-    for dim in range(13):
+    for dim in range(num_dims):
         cov = np.cov([d[dim] for d in data])
         covars.append(cov)
     return np.identity(num_dims) * np.array(covars)
@@ -36,19 +37,21 @@ def full_covar(data):
     return np.cov(data, rowvar=False)
 
 
-def plot_kmeans_contours(data, ax, color):
+def plot_kmeans_contours(data, cov, color, ax=None):
     mean = np.mean(data, axis=0)
     maxx_diff = max([abs(x[0] - mean[0]) for x in data])
     maxy_diff = max([abs(x[1] - mean[1]) for x in data])
     x = np.linspace(mean[0] - maxx_diff, mean[0] + maxx_diff, 1000)
     y = np.linspace(mean[1] - maxy_diff, mean[1] + maxy_diff, 1000)
     X, Y = np.meshgrid(x, y)
-    cov = np.cov(data, rowvar=False)
     z = multivariate_normal(mean, cov)
     pos = np.empty(X.shape + (2,))
     pos[:, :, 0] = X
     pos[:, :, 1] = Y
-    ax.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)
+    if ax is None:
+        plt.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)
+    else:
+        ax.contour(X, Y, z.pdf(pos), colors=color, alpha=.6)
 
 
 def kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied):

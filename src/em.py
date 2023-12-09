@@ -23,7 +23,7 @@ def em(mfccs, n_components, data, cov_type):
     return cluster_info
 
 
-def _fix_em_cov_output(self, covariance, covariance_type, covariance_tied, k):
+def fix_em_cov_output(self, covariance, covariance_type, covariance_tied, k):
     mfcc_length = len([x for x in self.hyperparams["mfcc_indexes"] if x >= 0])
     if covariance_type == "full":
         if covariance_tied:

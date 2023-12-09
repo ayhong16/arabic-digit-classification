@@ -68,26 +68,43 @@ class Analyzer:
         ax.set_ylabel(f"MFCC {comparisons[0][0]}")
         # plt.show()  # comment out for making multiple graphs at once
 
-    def plot_kmeans_gmm(self, token, comparisons, n_clusters, ax):
+    def plot_kmeans_gmm(self, token, comparisons, ax=None):
         data = self.get_all_training_utterances(token)
         # fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 6))
         colors = ["c", "r", "g", "m", 'y']
-        cluster_info = k_means(n_clusters, data)
+        cluster_info = k_means(self.phoneme_map[token], data)
+        components = kmeans_component_gmm_helper(cluster_info, data, self.cov["cov_type"], self.cov["tied"])
+        i = 0
+        temp = {}
+        for key in cluster_info:
+            temp[key] = {"data": cluster_info[key], "cov": components[i]["covariance"]}
+            i += 1
+        cluster_info = temp
         for i in range(len(comparisons)):
             first_comp = comparisons[i][0]
             second_comp = comparisons[i][1]
             color_ind = 0
             for key in cluster_info:
                 c = colors[color_ind]
-                coords = np.column_stack((cluster_info[key][:, second_comp - 1],
-                                          cluster_info[key][:, first_comp - 1]))
-                ax.scatter(coords[:, 0], coords[:, 1], s=.1, color=c, alpha=.8)
-                plot_kmeans_contours(coords, ax, c)
+                coords = np.column_stack((cluster_info[key]["data"][:, second_comp - 1],
+                                          cluster_info[key]["data"][:, first_comp - 1]))
+                if ax is None:
+                    plt.scatter(coords[:, 0], coords[:, 1], s=.1, color=c, alpha=.8)
+                else:
+                    ax.scatter(coords[:, 0], coords[:, 1], s=.1, color=c, alpha=.8)
+                cov = get_comp_covariance(second_comp - 1, first_comp - 1, cluster_info[key]["cov"])
+                plot_kmeans_contours(coords, cov, c, ax)
                 color_ind += 1
             # ax.set_title("MFCC " + str(first_comp) + "(y) vs. MFCC" + str(second_comp) + "(x)")
-            ax.set_title("K-Means Clustering")
-            ax.set_xlabel("MFCC " + str(second_comp))
-            ax.set_ylabel("MFCC " + str(first_comp))
+            if ax is None:
+                plt.title(f"K-Means Clustering")
+                plt.xlabel("MFCC " + str(second_comp))
+                plt.ylabel("MFCC " + str(first_comp))
+            else:
+                ax.set_title("K-Means Clustering")
+                ax.set_xlabel("MFCC " + str(second_comp))
+                ax.set_ylabel("MFCC " + str(first_comp))
+                ax.axis("equal")
         # fig.suptitle("K-Means GMMs for Various 2D Plots for Digit " + str(token))
         # plt.tight_layout()
 
@@ -115,11 +132,12 @@ class Analyzer:
                 color_ind += 1
             # ax.set_title("MFCC " + str(first_comp) + "(y) vs. MFCC" + str(second_comp) + "(x)")
             if ax is not None:
-                ax.set_title(f"Digit {token} {"Tied" if self.cov['tied'] else "Distinct"} {self.cov["cov_type"]} Covariance EM Clustering")
+                ax.set_title(f"EM Clustering")
                 ax.set_xlabel("MFCC " + str(second_comp))
                 ax.set_ylabel("MFCC " + str(first_comp))
+                ax.axis("equal")
             else:
-                plt.title(f"Digit {token} {"Tied" if self.cov['tied'] else "Distinct"} {self.cov["cov_type"]} Covariance EM Clustering")
+                plt.title(f"EM Clustering")
                 plt.xlabel("MFCC " + str(second_comp))
                 plt.ylabel("MFCC " + str(first_comp))
         # fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))

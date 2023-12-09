@@ -66,12 +66,14 @@ def plot_em_contours():
 def plot_em_kmeans_contours():
     analyzer = Analyzer()
     comps = [(1, 2)]
-    for d in range(10):
+    for d in range(1):
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
-        analyzer.plot_em_gmm(d, comps, analyzer.phoneme_map[d], axes[0])
-        analyzer.plot_kmeans_gmm(d, comps, analyzer.phoneme_map[d], axes[1])
-        plt.suptitle(f"Digit {d} Comparison of EM and K-Means")
+        analyzer.plot_em_gmm(d, comps, axes[0])
+        analyzer.plot_kmeans_gmm(d, comps, axes[1])
+        plt.suptitle(f"Digit {d} Comparison of Tied Spherical EM and K-Means")
         plt.tight_layout()
+        plt.axis('equal')
+        plt.savefig(f"../plots/tied_spherical_kmeans_em_comparison_{d}.png")
     plt.show()
 
 
@@ -244,11 +246,11 @@ if __name__ == '__main__':
     # plot_timeseries()
     # plot_pairwise_scatter()
     # plot_kmeans_contours()
-    # plot_em_kmeans_contours()
+    plot_em_kmeans_contours()
     # plot_tied_distinct_contours()
     # plot_likelihoods()
     # plot_em_contours()
-    plot_cov_performance()
+    # plot_cov_performance()
     # plot_cluster_accuracy()
     # plot_greedy_mfcc()
     # test()
