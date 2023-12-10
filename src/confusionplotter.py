@@ -32,7 +32,7 @@ def plot_confusion_matrix(confusion_matrix, title="Confusion Matrix"):
 
 
 def compute_accuracy(confusion):
-    return np.diag(confusion)
+    return np.diag(confusion) * 100
 
 
 def compute_precision(confusion):

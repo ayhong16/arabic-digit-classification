@@ -80,7 +80,7 @@ def plot_em_kmeans_contours():
     plt.show()
 
 
-def create_cov_performance_map(analyzer):
+def create_cov_performance_map(analyzer, gender=None):
     accuracy_map = {}
     precision_map = {}
     for cov_type in ["full", "diag", "spherical"]:
@@ -96,8 +96,9 @@ def create_cov_performance_map(analyzer):
     for cov_type in ["full", "diag", "spherical"]:
         for use_kmeans in [True, False]:
             for tied in [True, False]:
-                confusion = analyzer.compute_confusion_matrix(cov_type, use_kmeans, tied)
-                avg_accuracy = np.mean(compute_accuracy(confusion)) * 100
+                confusion = analyzer.compute_confusion_matrix(cov_type=cov_type, use_kmeans=use_kmeans,
+                                                              tied=tied, gender=gender)
+                avg_accuracy = np.mean(compute_accuracy(confusion))
                 avg_precision = np.mean(compute_precision(confusion))
                 accuracy_map[cov_type][kmeans_label(use_kmeans)][tied_label(tied)] = avg_accuracy
                 precision_map[cov_type][kmeans_label(use_kmeans)][tied_label(tied)] = avg_precision
@@ -123,19 +124,47 @@ def create_cluster_accuracy_map(analyzer):
 
 def plot_cov_performance():
     analyzer = Analyzer()
-    # accuracy_map, precision_map = create_cov_performance_map(analyzer)
-    accuracy_map = {'diag': {'em': {'distinct': 85.77, 'tied': 82.46},
-                             'kmeans': {'distinct': 52.86000000000001, 'tied': 74.07999999999998}},
-                    'full': {'em': {'distinct': 90.23, 'tied': 88.36},
-                             'kmeans': {'distinct': 87.53999999999999, 'tied': 87.91}},
-                    'spherical': {'em': {'distinct': 73.27, 'tied': 74.09},
-                                  'kmeans': {'distinct': 52.86000000000001, 'tied': 74.07999999999998}}}
-    precision_map = {'diag': {'em': {'distinct': 0.8765173785778824, 'tied': 0.8443208527942513},
-                              'kmeans': {'distinct': 0.6456228540617243, 'tied': 0.7766820352299685}},
-                     'full': {'em': {'distinct': 0.9050832188255169, 'tied': 0.8887451716946844},
-                              'kmeans': {'distinct': 0.8887162531107379, 'tied': 0.8878313045295714}},
-                     'spherical': {'em': {'distinct': 0.7675264417271108, 'tied': 0.7756454945695905},
-                                   'kmeans': {'distinct': 0.6456228540617243, 'tied': 0.7766820352299685}}}
+    accuracy_map, precision_map = create_cov_performance_map(analyzer, 'M')
+    # overall
+    # accuracy_map = {'diag': {'em': {'distinct': 85.77, 'tied': 82.46},
+    #                          'kmeans': {'distinct': 52.86000000000001, 'tied': 74.07999999999998}},
+    #                 'full': {'em': {'distinct': 90.23, 'tied': 88.36},
+    #                          'kmeans': {'distinct': 87.53999999999999, 'tied': 87.91}},
+    #                 'spherical': {'em': {'distinct': 73.27, 'tied': 74.09},
+    #                               'kmeans': {'distinct': 52.86000000000001, 'tied': 74.07999999999998}}}
+    # precision_map = {'diag': {'em': {'distinct': 0.8765173785778824, 'tied': 0.8443208527942513},
+    #                           'kmeans': {'distinct': 0.6456228540617243, 'tied': 0.7766820352299685}},
+    #                  'full': {'em': {'distinct': 0.9050832188255169, 'tied': 0.8887451716946844},
+    #                           'kmeans': {'distinct': 0.8887162531107379, 'tied': 0.8878313045295714}},
+    #                  'spherical': {'em': {'distinct': 0.7675264417271108, 'tied': 0.7756454945695905},
+    #                                'kmeans': {'distinct': 0.6456228540617243, 'tied': 0.7766820352299685}}}
+    # female
+    # accuracy_map = {'diag': {'em': {'distinct': 93.27000000000001, 'tied': 92.18},
+    #                          'kmeans': {'distinct': 55.010000000000005, 'tied': 82.80999999999999}},
+    #                 'full': {'em': {'distinct': 90.64, 'tied': 92.1},
+    #                          'kmeans': {'distinct': 90.83, 'tied': 90.1}},
+    #                 'spherical': {'em': {'distinct': 82.53999999999999, 'tied': 82.55},
+    #                               'kmeans': {'distinct': 55.010000000000005, 'tied': 82.80999999999999}}}
+    # precision_map = {'diag': {'em': {'distinct': 0.9374554562218915, 'tied': 0.9258285472357984},
+    #                           'kmeans': {'distinct': 0.5460513670668109,
+    #                                      'tied': 0.8446610273864008}},
+    #                  'full': {'em': {'distinct': 0.9082815586718807, 'tied': 0.9227000608298379},
+    #                           'kmeans': {'distinct': 0.9132011460643265, 'tied': 0.9047112727998743}},
+    #                  'spherical': {'em': {'distinct': 0.8505384553471439, 'tied': 0.8491389141874917},
+    #                                'kmeans': {'distinct': 0.5460513670668109, 'tied': 0.8446610273864008}}}
+    # male
+    accuracy_map = {'diag': {'em': {'distinct': 85.01, 'tied': 87.0},
+                             'kmeans': {'distinct': 60.370000000000005, 'tied': 69.83}},
+                    'full': {'em': {'distinct': 86.44, 'tied': 87.91000000000001},
+                             'kmeans': {'distinct': 85.64, 'tied': 87.09}},
+                    'spherical': {'em': {'distinct': 72.09, 'tied': 71.44999999999999},
+                                  'kmeans': {'distinct': 60.370000000000005, 'tied': 69.83}}}
+    precision_map = {'diag': {'em': {'distinct': 0.8651645502007088, 'tied': 0.8878466433582464},
+                              'kmeans': {'distinct': 0.6824426990843083, 'tied': 0.7963014734285093}},
+                     'full': {'em': {'distinct': 0.8737526496427288, 'tied': 0.897020907490759},
+                              'kmeans': {'distinct': 0.8789974437870782, 'tied': 0.885845190107872}},
+                     'spherical': {'em': {'distinct': 0.7858736054257143, 'tied': 0.7813587584241425},
+                                   'kmeans': {'distinct': 0.6824426990843083, 'tied': 0.7963014734285093}}}
     pprint(accuracy_map)
     pprint(precision_map)
 
@@ -156,15 +185,16 @@ def plot_cov_performance():
             kmeans_accuracy_vals.append(accuracy_map[cov_type][kmeans_label(True)][tied_label(tied)])
             kmeans_precision_vals.append(precision_map[cov_type][kmeans_label(True)][tied_label(tied)])
 
-    fig, axes = plt.subplots(nrows=2, ncols=1)
+    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(12, 8))
     plot_bar_graph(categories, em_accuracy_vals, kmeans_accuracy_vals, axes[0], True)
     plot_bar_graph(categories, em_precision_vals, kmeans_precision_vals, axes[1], False)
     plt.legend(fontsize='large')
     plt.tight_layout()
+    plt.savefig("../plots/male_cov_performance.png")
     plt.show()
 
 
-def create_mfcc_accuracy_map(analyzer):
+def create_mfcc_accuracy_map(analyzer, gender=None):
     accuracy_map = {}
     mfccs = range(13)
     for n_keep in range(1, 14):
@@ -180,8 +210,8 @@ def create_mfcc_accuracy_map(analyzer):
             if mfcc not in best_mfccs:
                 temp = best_mfccs.copy()
                 temp.append(mfcc)
-                confusion = analyzer.compute_confusion_matrix(mfccs=temp)
-                accuracy = np.mean(compute_accuracy(confusion)) * 100
+                confusion = analyzer.compute_confusion_matrix(mfccs=temp, gender=gender)
+                accuracy = np.mean(compute_accuracy(confusion))
                 if accuracy > best_accuracy:
                     best_accuracy = accuracy
                     best_mfcc = mfcc
@@ -215,7 +245,7 @@ def plot_bar_graph(categories, em_vals, kmeans_vals, ax, isAccuracy):
     ax.set_ylabel(f'{"Accuracy (%)" if isAccuracy else "Precision"}')
     ax.set_yticks(y_ticks)
     ax.grid(True, zorder=1)
-    ax.set_title(f'Average {"Accuracy" if isAccuracy else "Precision"} With Varying Parameters')
+    ax.set_title(f'Male Average {"Accuracy" if isAccuracy else "Precision"} With Varying Parameters')
     ax.set_xticks(x, categories)
 
 
@@ -281,20 +311,49 @@ def plot_all_cov_contours():
 
 def plot_greedy_mfcc():
     analyzer = Analyzer()
-    # accuracy_map = create_mfcc_accuracy_map(analyzer)
-    accuracy_map = {1: {'accuracy': 38.69, 'mfccs': [4]},
-                    2: {'accuracy': 64.19, 'mfccs': [4, 2]},
-                    3: {'accuracy': 76.66000000000001, 'mfccs': [4, 2, 1]},
-                    4: {'accuracy': 83.05000000000001, 'mfccs': [4, 2, 1, 7]},
-                    5: {'accuracy': 86.76, 'mfccs': [4, 2, 1, 7, 5]},
-                    6: {'accuracy': 88.66999999999999, 'mfccs': [4, 2, 1, 7, 5, 10]},
-                    7: {'accuracy': 88.91, 'mfccs': [4, 2, 1, 7, 5, 10, 12]},
-                    8: {'accuracy': 89.21000000000001, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6]},
-                    9: {'accuracy': 90.60000000000001, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8]},
-                    10: {'accuracy': 90.27, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9]},
-                    11: {'accuracy': 89.72999999999999, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9, 11]},
-                    12: {'accuracy': 90.27999999999999, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9, 11, 3]},
-                    13: {'accuracy': 90.23, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9, 11, 3, 0]}}
+    # accuracy_map = create_mfcc_accuracy_map(analyzer, 'M')
+    # overall
+    # accuracy_map = {1: {'accuracy': 38.69, 'mfccs': [4]},
+    #                 2: {'accuracy': 64.19, 'mfccs': [4, 2]},
+    #                 3: {'accuracy': 76.66000000000001, 'mfccs': [4, 2, 1]},
+    #                 4: {'accuracy': 83.05000000000001, 'mfccs': [4, 2, 1, 7]},
+    #                 5: {'accuracy': 86.76, 'mfccs': [4, 2, 1, 7, 5]},
+    #                 6: {'accuracy': 88.66999999999999, 'mfccs': [4, 2, 1, 7, 5, 10]},
+    #                 7: {'accuracy': 88.91, 'mfccs': [4, 2, 1, 7, 5, 10, 12]},
+    #                 8: {'accuracy': 89.21000000000001, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6]},
+    #                 9: {'accuracy': 90.60000000000001, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8]},
+    #                 10: {'accuracy': 90.27, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9]},
+    #                 11: {'accuracy': 89.72999999999999, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9, 11]},
+    #                 12: {'accuracy': 90.27999999999999, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9, 11, 3]},
+    #                 13: {'accuracy': 90.23, 'mfccs': [4, 2, 1, 7, 5, 10, 12, 6, 8, 9, 11, 3, 0]}}
+    # female
+    # accuracy_map = {1: {'accuracy': 58.36, 'mfccs': [4]},
+    #                 2: {'accuracy': 82.09, 'mfccs': [4, 2]},
+    #                 3: {'accuracy': 88.54, 'mfccs': [4, 2, 1]},
+    #                 4: {'accuracy': 92.72999999999999, 'mfccs': [4, 2, 1, 7]},
+    #                 5: {'accuracy': 93.19, 'mfccs': [4, 2, 1, 7, 10]},
+    #                 6: {'accuracy': 93.17999999999998, 'mfccs': [4, 2, 1, 7, 10, 12]},
+    #                 7: {'accuracy': 94.0, 'mfccs': [4, 2, 1, 7, 10, 12, 6]},
+    #                 8: {'accuracy': 93.02000000000001, 'mfccs': [4, 2, 1, 7, 10, 12, 6, 11]},
+    #                 9: {'accuracy': 92.36999999999998, 'mfccs': [4, 2, 1, 7, 10, 12, 6, 11, 5]},
+    #                 10: {'accuracy': 91.72, 'mfccs': [4, 2, 1, 7, 10, 12, 6, 11, 5, 9]},
+    #                 11: {'accuracy': 91.53999999999999, 'mfccs': [4, 2, 1, 7, 10, 12, 6, 11, 5, 9, 8]},
+    #                 12: {'accuracy': 91.01, 'mfccs': [4, 2, 1, 7, 10, 12, 6, 11, 5, 9, 8, 0]},
+    #                 13: {'accuracy': 90.64, 'mfccs': [4, 2, 1, 7, 10, 12, 6, 11, 5, 9, 8, 0, 3]}}
+    # male
+    accuracy_map = {1: {'accuracy': 34.63999999999999, 'mfccs': [10]},
+                    2: {'accuracy': 57.720000000000006, 'mfccs': [10, 7]},
+                    3: {'accuracy': 70.09, 'mfccs': [10, 7, 4]},
+                    4: {'accuracy': 80.17999999999999, 'mfccs': [10, 7, 4, 6]},
+                    5: {'accuracy': 84.28, 'mfccs': [10, 7, 4, 6, 3]},
+                    6: {'accuracy': 87.47, 'mfccs': [10, 7, 4, 6, 3, 8]},
+                    7: {'accuracy': 89.27, 'mfccs': [10, 7, 4, 6, 3, 8, 11]},
+                    8: {'accuracy': 88.92, 'mfccs': [10, 7, 4, 6, 3, 8, 11, 2]},
+                    9: {'accuracy': 88.55, 'mfccs': [10, 7, 4, 6, 3, 8, 11, 2, 9]},
+                    10: {'accuracy': 87.91000000000001, 'mfccs': [10, 7, 4, 6, 3, 8, 11, 2, 9, 0]},
+                    11: {'accuracy': 88.65, 'mfccs': [10, 7, 4, 6, 3, 8, 11, 2, 9, 0, 5]},
+                    12: {'accuracy': 88.25999999999999, 'mfccs': [10, 7, 4, 6, 3, 8, 11, 2, 9, 0, 5, 1]},
+                    13: {'accuracy': 86.44, 'mfccs': [10, 7, 4, 6, 3, 8, 11, 2, 9, 0, 5, 1, 12]}}
     num_mfccs = [i for i in range(1, 14)]
     accuracy_vals = []
     for n_keep in num_mfccs:
@@ -309,9 +368,98 @@ def plot_greedy_mfcc():
                  arrowprops=dict(facecolor='black', arrowstyle='->'))
     plt.xlabel('Number of MFCCs Used')
     plt.ylabel('Accuracy (%)')
-    plt.title('Evolution of Accuracy with Increasing Number of MFCCs')
+    plt.title('Male Evolution of Accuracy with Increasing Number of MFCCs')
     plt.grid(True)
-    plt.savefig("../plots/greedy_mfcc_results.png")
+    plt.savefig("../plots/male_greedy_mfcc_results.png")
+    plt.show()
+
+
+def create_cluster_effect_accuracy_map(analyzer):
+    accuracy_map = {}
+    clusters = [i for i in range(1, 9)]
+    gmms = [analyzer.estimate_gmm_params(digit) for digit in range(10)]
+    for d in range(10):
+        accuracy_map[d] = []
+    for i in clusters:
+        analyzer.phoneme_map[0] = i
+        print(f"Training with {analyzer.phoneme_map[0]} clusters.")
+        gmms[0] = analyzer.estimate_gmm_params(0)
+        confusion = analyzer.compute_confusion_matrix(gmms=gmms)
+        accuracy = compute_accuracy(confusion)
+        for d in range(10):
+            accuracy_map[d].append(accuracy[d])
+    return accuracy_map
+
+
+def plot_cluster_effect():
+    analyzer = Analyzer()
+    # accuracy_map = create_cluster_effect_accuracy_map(analyzer)
+    # Digit 0
+    accuracy_map = {0: [18.6, 75.5, 79.10000000000001, 94.5, 96.39999999999999, 98.2, 97.3, 98.2],
+                    1: [96.39999999999999, 96.39999999999999, 96.39999999999999, 96.39999999999999,
+                        96.39999999999999, 96.39999999999999, 96.39999999999999, 96.39999999999999],
+                    2: [81.8, 81.8, 81.8, 81.8, 81.8, 81.8, 81.8, 81.39999999999999],
+                    3: [86.8, 86.4, 86.8, 85.0, 82.3, 82.3, 82.3, 80.0],
+                    4: [86.8, 86.8, 86.8, 86.8, 86.4, 86.8, 86.4, 86.8],
+                    5: [88.2, 88.2, 88.2, 88.2, 86.4, 85.9, 85.5, 85.0],
+                    6: [96.39999999999999, 96.39999999999999, 96.39999999999999, 95.5, 92.7, 91.4, 90.9, 88.2],
+                    7: [83.2, 83.2, 83.2, 82.69999999999999, 82.3, 81.8, 81.39999999999999, 80.5],
+                    8: [95.89999999999999, 95.89999999999999, 95.89999999999999, 95.89999999999999, 95.89999999999999,
+                        95.89999999999999, 95.89999999999999, 95.89999999999999],
+                    9: [95.5, 95.5, 95.5, 95.5, 95.5, 95.5, 95.5, 95.5]}
+    # Digit 9
+    # accuracy_map = {0: [92.7, 92.7, 92.7, 94.5, 94.5, 94.5, 92.30000000000001, 90.5],
+    #                 1: [96.39999999999999, 96.39999999999999, 96.39999999999999, 96.39999999999999, 96.39999999999999,
+    #                     96.39999999999999, 96.39999999999999, 95.5],
+    #                 2: [82.3, 82.3, 82.3, 82.3, 81.8, 81.39999999999999, 80.0, 79.5],
+    #                 3: [85.0, 85.0, 85.0, 85.0, 85.0, 84.1, 79.10000000000001, 79.5],
+    #                 4: [88.6, 88.6, 88.6, 88.6, 86.8, 85.5, 81.39999999999999, 80.5],
+    #                 5: [88.6, 88.6, 88.6, 88.2, 88.2, 85.0, 82.69999999999999, 82.69999999999999],
+    #                 6: [96.39999999999999, 96.39999999999999, 96.39999999999999, 96.39999999999999, 95.5, 88.2,
+    #                     83.2, 85.0],
+    #                 7: [86.8, 86.8, 86.8, 86.4, 82.69999999999999, 79.10000000000001, 74.5, 71.8],
+    #                 8: [95.89999999999999, 95.89999999999999, 95.89999999999999, 95.89999999999999, 95.89999999999999,
+    #                     95.0, 95.0, 95.0],
+    #                 9: [21.4, 51.800000000000004, 69.5, 73.2, 95.5, 96.8, 97.3, 95.5]}
+    pprint(accuracy_map)
+    x = [i for i in range(1, 9)]
+    for i in range(10):
+        plt.plot(x, accuracy_map[i], marker='o', label=f"Digit {i} Accuracy")
+    plt.xlabel("Number of Clusters")
+    plt.ylabel("Accuracy (%)")
+    plt.title("Effect of Digit 0 Clusters on Accuracy for Each Digit")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("../plots/global_cluster_effect_digit_0.png")
+    plt.show()
+
+
+def plot_gender_accuracy():
+    analyzer = Analyzer()
+    # overall = np.mean(compute_accuracy(analyzer.compute_confusion_matrix()))
+    # female = np.mean(compute_accuracy(analyzer.compute_confusion_matrix(gender='F')))
+    # male = np.mean(compute_accuracy(analyzer.compute_confusion_matrix(gender='M')))
+    overall = 90.6
+    female = 93.92
+    male = 87.25999999999999
+    print(f"Overall: {overall}, Female: {female}, Male: {male}")
+
+    # Values and labels for the bar graph
+    values = [overall, female, male]
+    labels = ["Overall", "Female", "Male"]
+
+    plt.bar(labels, values, color=['blue', 'orange', 'magenta'])
+    plt.xlabel('Gender')
+    plt.ylabel('Accuracy')
+    plt.title('Accuracy by Gender')
+    plt.ylim(50, 100)  # Set the y-axis limits between 0 and 1 for accuracy values
+    plt.grid(axis='y')  # Show gridlines on the y-axis
+
+    # Display the values on top of the bars
+    for i, v in enumerate(values):
+        plt.text(i, v + 0.15, f"{v:.2f}", ha='center')
+    plt.tight_layout()
+    plt.savefig("../plots/gender_accuracy.png")
     plt.show()
 
 
@@ -325,6 +473,8 @@ if __name__ == '__main__':
     # plot_em_contours()
     # plot_cov_performance()
     # plot_cluster_accuracy()
-    # plot_greedy_mfcc()
+    plot_greedy_mfcc()
     # plot_tied_distinct_contours()
-    plot_all_cov_contours()
+    # plot_all_cov_contours()
+    # plot_cluster_effect()
+    # plot_gender_accuracy()

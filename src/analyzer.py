@@ -17,7 +17,7 @@ class Analyzer:
         self.train_df = parser.train_df
         self.test_df = parser.test_df
         # self.mfccs = [4, 2, 1, 7, 5, 10, 12, 6, 8]
-        self.mfccs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+        self.mfccs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
         self.cov = {"tied": False, "cov_type": "full"}
         self.use_kmeans = False
         self.phoneme_map = {
@@ -148,31 +148,31 @@ class Analyzer:
         # fig.suptitle("EM GMMs for Various 2D Plots for Digit " + str(token))
         # plt.tight_layout()
 
-    def estimate_gmm_params(self, token, covariance_type=None, use_kmeans=None, tied=None, mfccs=None):
+    def estimate_gmm_params(self, token, cov_type=None, use_kmeans=None, tied=None, mfccs=None, gender=None):
         start = time.time()
         n_clusters = self.phoneme_map[token]
-        if covariance_type is None:
-            covariance_type = self.cov["cov_type"]
+        if cov_type is None:
+            cov_type = self.cov["cov_type"]
         if tied is None:
             tied = self.cov["tied"]
         if use_kmeans is None:
             use_kmeans = self.use_kmeans
         if mfccs is None:
             mfccs = self.mfccs
-        data = self.get_all_training_utterances(token)
+        data = self.get_all_training_utterances(token, gender)
         data = data[:, mfccs]
         if use_kmeans:
             cluster_info = k_means(n_clusters, data)
-            components = kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied)
+            components = kmeans_component_gmm_helper(cluster_info, data, cov_type, tied)
         else:
-            cov_in = fix_em_cov_input(tied, covariance_type)
+            cov_in = fix_em_cov_input(tied, cov_type)
             cluster_info = em(mfccs, n_clusters, data, cov_type=cov_in)
             components = em_component_gmm_helper(cluster_info)
         cov_tied = "tied " if tied else "distinct "
         ret = {
             "digit": token,
             "number of components": n_clusters,
-            "covariance type": cov_tied + covariance_type,
+            "covariance type": cov_tied + cov_type,
             "components": components,
             "mfccs": mfccs
         }
@@ -196,9 +196,9 @@ class Analyzer:
         plt.suptitle(f"PDFs Using {gmm["covariance type"]} GMM for {gmm["digit"]}")
         plt.show()
 
-    def classify_all_utterances(self, token, gmms):
+    def classify_all_utterances(self, token, gmms, gender=None):
         start = time.time()
-        filtered = self.filter_test_utterances(token)
+        filtered = self.filter_test_utterances(token, gender)
         classifications = np.zeros(10)
         mfccs = filtered["MFCCs"].to_numpy()
         for utterance in mfccs:
@@ -210,7 +210,7 @@ class Analyzer:
         print(f"Time to classify {token}: {end - start}")
         return np.round(classifications, 3)
 
-    def compute_confusion_matrix(self, cov_type=None, use_kmeans=None, tied=None, mfccs=None):
+    def compute_confusion_matrix(self, gmms=None, cov_type=None, use_kmeans=None, tied=None, mfccs=None, gender=None):
         confusion = np.zeros((10, 10))
         if cov_type is None:
             cov_type = self.cov["cov_type"]
@@ -220,17 +220,24 @@ class Analyzer:
             tied = self.cov["tied"]
         if mfccs is None:
             mfccs = self.mfccs
-        gmms = [self.estimate_gmm_params(digit, cov_type, use_kmeans, tied, mfccs) for digit in range(10)]
+        if gmms is None:
+            gmms = [self.estimate_gmm_params(digit, cov_type=cov_type, use_kmeans=use_kmeans, tied=tied,
+                                             mfccs=mfccs, gender=gender) for digit in range(10)]
         for digit in range(10):
-            classification = self.classify_all_utterances(digit, gmms)
+            classification = self.classify_all_utterances(digit, gmms, gender)
             confusion[digit, :] = classification
         return confusion
 
-    def filter_test_utterances(self, token):
-        return self.test_df[self.test_df['Digit'] == token]
+    def filter_test_utterances(self, token, gender=None):
+        filtered = self.test_df[self.test_df['Digit'] == token]
+        if gender is not None:
+            filtered = filtered[filtered['Gender'] == gender]
+        return filtered
 
-    def get_all_training_utterances(self, token):
+    def get_all_training_utterances(self, token, gender=None):
         filtered = self.train_df[self.train_df['Digit'] == token]
+        if gender is not None:
+            filtered = filtered[filtered['Gender'] == gender]
         data = []
         for index, row in filtered.iterrows():
             data.append(row['MFCCs'])
