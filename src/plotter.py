@@ -51,9 +51,11 @@ def plot_kmeans_contours():
 
 def plot_likelihoods():
     analyzer = Analyzer()
-    digit = 9
-    gmm_params = analyzer.estimate_gmm_params(digit)
-    analyzer.plot_likelihood_pdfs(gmm_params)
+    for d in range(1):
+        gmm_params = analyzer.estimate_gmm_params(d)
+        analyzer.plot_likelihood_pdfs(gmm_params)
+        plt.savefig(f"../plots/likelihoods_digit_{d}.png")
+        plt.show()
 
 
 def plot_em_contours():
@@ -467,13 +469,13 @@ if __name__ == '__main__':
     # plot_timeseries()
     # plot_pairwise_scatter()
     # plot_kmeans_contours()
-    # plot_em_kmeans_contours()
+    plot_em_kmeans_contours()
     # plot_tied_distinct_contours()
-    # plot_likelihoods()
+    plot_likelihoods()
     # plot_em_contours()
     # plot_cov_performance()
     # plot_cluster_accuracy()
-    plot_greedy_mfcc()
+    # plot_greedy_mfcc()
     # plot_tied_distinct_contours()
     # plot_all_cov_contours()
     # plot_cluster_effect()

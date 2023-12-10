@@ -55,7 +55,7 @@ def plot_kmeans_contours(data, cov, ax=None):
 
 
 def kmeans_component_gmm_helper(cluster_info, data, covariance_type, tied):
-    tied_data = np.zeros((0, 13))
+    tied_data = np.zeros((0, len(data[1])))
     for key in cluster_info:
         mean = np.array(key)
         centered_points = cluster_info[key] - mean

@@ -16,10 +16,12 @@ class Analyzer:
         parser = DataParser()
         self.train_df = parser.train_df
         self.test_df = parser.test_df
-        # self.mfccs = [4, 2, 1, 7, 5, 10, 12, 6, 8]
-        self.mfccs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        self.overall_mfccs = [4, 2, 1, 7, 5, 10, 12, 6, 8]
+        # self.overall_mfccs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
         self.cov = {"tied": False, "cov_type": "full"}
-        self.use_kmeans = False
+        self.female_mfccs = [1, 2, 4, 6, 7, 10, 12]
+        self.male_mfccs = [3, 4, 6, 7, 8, 10, 11]
+        self.use_kmeans = True
         self.phoneme_map = {
             0: 4,
             1: 4,
@@ -75,7 +77,8 @@ class Analyzer:
         # fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 6))
         colors = ["c", "r", "g", "m", 'y']
         cluster_info = k_means(self.phoneme_map[token], data)
-        components = kmeans_component_gmm_helper(cluster_info, data, self.cov["cov_type"], self.cov["tied"])
+        components = kmeans_component_gmm_helper(cluster_info, data, self.cov["cov_type"],
+                                                 self.cov["tied"])
         i = 0
         temp = {}
         for key in cluster_info:
@@ -117,7 +120,7 @@ class Analyzer:
         colors = ["c", "r", "g", "m", 'y']
         cov_in = fix_em_cov_input(self.cov["tied"], self.cov["cov_type"])
         n_components = self.phoneme_map[token]
-        cluster_info = em(self.mfccs, n_components, data, cov_in)
+        cluster_info = em(self.overall_mfccs, n_components, data, cov_in)
         for i in range(len(comparisons)):
             first_comp = comparisons[i][0]
             second_comp = comparisons[i][1]
@@ -135,7 +138,8 @@ class Analyzer:
                 color_ind += 1
             # ax.set_title("MFCC " + str(first_comp) + "(y) vs. MFCC" + str(second_comp) + "(x)")
             if ax is not None:
-                ax.set_title(f"{"Tied" if self.cov["tied"] else "Distinct"} {self.cov["cov_type"]} Covariance")
+                ax.set_title(
+                    f"{"Tied" if self.cov["tied"] else "Distinct"} {self.cov["cov_type"]} Covariance")
                 ax.set_xlabel("MFCC " + str(second_comp))
                 ax.set_ylabel("MFCC " + str(first_comp))
                 if self.cov["cov_type"] == "spherical":
@@ -158,7 +162,11 @@ class Analyzer:
         if use_kmeans is None:
             use_kmeans = self.use_kmeans
         if mfccs is None:
-            mfccs = self.mfccs
+            mfccs = self.overall_mfccs
+        if gender == 'F':
+            mfccs = self.female_mfccs
+        if gender == 'M':
+            mfccs = self.male_mfccs
         data = self.get_all_training_utterances(token, gender)
         data = data[:, mfccs]
         if use_kmeans:
@@ -181,7 +189,7 @@ class Analyzer:
         return ret
 
     def plot_likelihood_pdfs(self, gmm):
-        fig, axs = plt.subplots(10, 1, tight_layout=True, sharex=True, sharey=True)
+        fig, axs = plt.subplots(10, 1, figsize=(12, 8), tight_layout=True, sharex=True, sharey=True)
         for digit, ax in enumerate(axs.flatten()):
             filtered = self.train_df[self.train_df['Digit'] == digit]
             likelihoods = np.array(filtered['MFCCs'].apply(lambda x:
@@ -194,7 +202,7 @@ class Analyzer:
             plt.xlim((-1500, -200))
         plt.tight_layout()
         plt.suptitle(f"PDFs Using {gmm["covariance type"]} GMM for {gmm["digit"]}")
-        plt.show()
+        plt.subplots_adjust(left=0.07, right=0.98, bottom=0.05, top=0.95, wspace=0.2, hspace=0.975)
 
     def classify_all_utterances(self, token, gmms, gender=None):
         start = time.time()
@@ -219,13 +227,21 @@ class Analyzer:
         if tied is None:
             tied = self.cov["tied"]
         if mfccs is None:
-            mfccs = self.mfccs
-        if gmms is None:
-            gmms = [self.estimate_gmm_params(digit, cov_type=cov_type, use_kmeans=use_kmeans, tied=tied,
-                                             mfccs=mfccs, gender=gender) for digit in range(10)]
+            mfccs = self.overall_mfccs
+        # if gmms is None:
+        #     gmms = [self.estimate_gmm_params(digit, cov_type=cov_type, use_kmeans=use_kmeans, tied=tied,
+        #                                      mfccs=mfccs, gender=gender) for digit in range(10)]
+        f_mfccs = self.female_mfccs
+        m_mfccs = self.male_mfccs
+        f_gmms = [self.estimate_gmm_params(digit, cov_type=cov_type, use_kmeans=use_kmeans, tied=tied,
+                                           mfccs=f_mfccs, gender='F') for digit in range(10)]
+        m_gmms = [self.estimate_gmm_params(digit, cov_type=cov_type, use_kmeans=use_kmeans, tied=tied,
+                                           mfccs=m_mfccs, gender='M') for digit in range(10)]
         for digit in range(10):
-            classification = self.classify_all_utterances(digit, gmms, gender)
-            confusion[digit, :] = classification
+            f_classification = self.classify_all_utterances(digit, f_gmms, 'F')
+            m_classification = self.classify_all_utterances(digit, m_gmms, 'M')
+            # confusion[digit] = (f_classification + m_classification) / 2
+            confusion[digit] = m_classification
         return confusion
 
     def filter_test_utterances(self, token, gender=None):
@@ -249,4 +265,3 @@ class Analyzer:
         data = metadata['MFCCs']
         x = [i for i in range(len(data))]
         return x, np.array(data)
-
