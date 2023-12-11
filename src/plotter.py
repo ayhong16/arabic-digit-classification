@@ -2,8 +2,9 @@ from pprint import pprint
 
 import numpy as np
 from matplotlib import pyplot as plt
+
 from analyzer import Analyzer
-from confusionplotter import compute_accuracy, compute_precision, plot_confusion_matrix
+from confusionplotter import compute_accuracy, compute_precision
 
 
 def kmeans_label(kmeans):
