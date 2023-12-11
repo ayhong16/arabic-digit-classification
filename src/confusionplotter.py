@@ -28,7 +28,7 @@ def plot_confusion_matrix(confusion_matrix, title="Confusion Matrix"):
 
     fig.colorbar(im, cax=ax_colorbar)
     plt.tight_layout()
-    fig.savefig("../plots/kmeans_confusion_matrix.png", dpi=300)
+    fig.savefig("../plots/stratified_confusion_matrix.png", dpi=300)
     plt.show()
 
 
@@ -87,7 +87,7 @@ def make_confusion_matrix():
     plot_confusion_bar_graph(accuracy, axes[0], True)
     plot_confusion_bar_graph(precision, axes[1], False)
     plt.subplots_adjust(left=.08, right=.97, top=.93, bottom=.09, hspace=0.39, wspace=.2)
-    fig.savefig("../plots/kmeans_confusion_accuracy_precision.png", dpi=300)
+    fig.savefig("../plots/stratified_confusion_accuracy_precision.png", dpi=300)
     plot_confusion_matrix(confusion)
 
 

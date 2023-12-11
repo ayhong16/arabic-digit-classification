@@ -21,7 +21,7 @@ class Analyzer:
         self.cov = {"tied": False, "cov_type": "full"}
         self.female_mfccs = [1, 2, 4, 6, 7, 10, 12]
         self.male_mfccs = [3, 4, 6, 7, 8, 10, 11]
-        self.use_kmeans = True
+        self.use_kmeans = False
         self.phoneme_map = {
             0: 4,
             1: 4,
@@ -240,8 +240,8 @@ class Analyzer:
         for digit in range(10):
             f_classification = self.classify_all_utterances(digit, f_gmms, 'F')
             m_classification = self.classify_all_utterances(digit, m_gmms, 'M')
-            # confusion[digit] = (f_classification + m_classification) / 2
-            confusion[digit] = m_classification
+            confusion[digit] = (f_classification + m_classification) / 2
+            # confusion[digit] = m_classification
         return confusion
 
     def filter_test_utterances(self, token, gender=None):
