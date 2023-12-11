@@ -17,11 +17,12 @@ def tied_label(use_tied):
 
 def plot_timeseries():
     analyzer = Analyzer()
-    fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(16, 14))
-    for d, ax in enumerate(axes.flatten()):
-        analyzer.plot_timeseries(d, 0, 13, ax)
-    plt.subplots_adjust(left=0.05, right=0.95, bottom=0.06, top=0.92, wspace=0.35, hspace=0.25)
-    plt.suptitle("MFCC Evolution Throughout an Utterance of Each Digit")
+    # fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(16, 14))
+    # for d, ax in enumerate(axes.flatten()):
+    analyzer.plot_timeseries(0, 0, 13)
+    # plt.subplots_adjust(left=0.05, right=0.95, bottom=0.06, top=0.92, wspace=0.35, hspace=0.25)
+    plt.tight_layout()
+    plt.title("MFCC Evolution of Digit 0")
     plt.show()
 
 
@@ -467,12 +468,12 @@ def plot_gender_accuracy():
 
 
 if __name__ == '__main__':
-    # plot_timeseries()
+    plot_timeseries()
     # plot_pairwise_scatter()
     # plot_kmeans_contours()
-    plot_em_kmeans_contours()
+    # plot_em_kmeans_contours()
     # plot_tied_distinct_contours()
-    plot_likelihoods()
+    # plot_likelihoods()
     # plot_em_contours()
     # plot_cov_performance()
     # plot_cluster_accuracy()

@@ -16,7 +16,7 @@ class Analyzer:
         parser = DataParser()
         self.train_df = parser.train_df
         self.test_df = parser.test_df
-        self.overall_mfccs = [4, 2, 1, 7, 5, 10, 12, 6, 8]
+        self.overall_mfccs = [1, 2, 4, 5, 6, 7, 8, 10, 12]
         # self.overall_mfccs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
         self.cov = {"tied": False, "cov_type": "full"}
         self.female_mfccs = [1, 2, 4, 6, 7, 10, 12]
@@ -35,7 +35,7 @@ class Analyzer:
             9: 5,
         }
 
-    def plot_timeseries(self, token, index, num_mfccs, ax):
+    def plot_timeseries(self, token, index, num_mfccs, ax=None):
         metadata = self.get_single_training_utterance(token, index)
         data = metadata[1]
         x = metadata[0]
@@ -46,10 +46,18 @@ class Analyzer:
                 temp.append(data[j][i])
             y.append(temp)
         for k in range(len(y)):
-            ax.plot(x, y[k], label=f"MFCC {k + 1}")
-        ax.set_xlabel('Analysis Window', fontsize='small')
-        ax.set_ylabel('MFCCs', fontsize='small')
-        ax.set_title(f'Digit {str(token)}', fontsize='small')
+            if ax is None:
+                plt.plot(x, y[k], label=f"MFCC {k + 1}")
+            else:
+                ax.plot(x, y[k], label=f"MFCC {k + 1}")
+        if ax is None:
+            plt.xlabel('Analysis Window', fontsize='small')
+            plt.ylabel('MFCCs', fontsize='small')
+            plt.title(f'Digit {str(token)}', fontsize='small')
+        else:
+            ax.set_xlabel('Analysis Window', fontsize='small')
+            ax.set_ylabel('MFCCs', fontsize='small')
+            ax.set_title(f'Digit {str(token)}', fontsize='small')
 
     def plot_scatter(self, ax, token, comparisons):
         data = self.get_all_training_utterances(token)
